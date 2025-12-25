@@ -67,7 +67,7 @@ export default function CustomersScreen() {
     const renderCustomer = ({ item }) => (
         <TouchableOpacity
             style={{ backgroundColor: '#FFFFFF', marginBottom: 12, borderRadius: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
-            onPress={() => router.push({ pathname: '/(tabs)/payment', params: { customerId: item._id } })}
+            onPress={() => router.push({ pathname: '/(tabs)/customer-details', params: { customerId: item._id } })}
         >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                 <View style={{ flex: 1 }}>
@@ -167,7 +167,7 @@ export default function CustomersScreen() {
                     data={customers}
                     renderItem={renderCustomer}
                     keyExtractor={(item) => item._id}
-                    contentContainerStyle={{ padding: 20 }}
+                    contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1F8A70']} />
                     }
@@ -179,6 +179,29 @@ export default function CustomersScreen() {
                     }
                 />
             )}
+
+            {/* Floating Add Button */}
+            <TouchableOpacity
+                style={{
+                    position: 'absolute',
+                    right: 20,
+                    bottom: 20,
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    backgroundColor: '#1F8A70',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                    elevation: 8
+                }}
+                onPress={() => router.push('/(tabs)/add-customer')}
+            >
+                <Ionicons name="add" size={32} color="#FFFFFF" />
+            </TouchableOpacity>
         </SafeAreaView>
     );
 }

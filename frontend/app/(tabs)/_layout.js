@@ -82,7 +82,6 @@ export default function TabLayout() {
                 }}
             />
 
-            {/* Payment Screen - HIDDEN (not shown in tab bar) */}
             <Tabs.Screen
                 name="payment"
                 options={{
@@ -92,7 +91,6 @@ export default function TabLayout() {
                 }}
             />
 
-            {/* Receipt Details - HIDDEN (not shown in tab bar) */}
             <Tabs.Screen
                 name="receipt"
                 options={{
@@ -101,6 +99,10 @@ export default function TabLayout() {
                     headerShown: false,
                 }}
             />
+
+            <Tabs.Screen name="add-customer" options={{ href: null }} />
+            <Tabs.Screen name="customer-details" options={{ href: null }} />
+            <Tabs.Screen name="edit-customer" options={{ href: null }} />
         </Tabs>
     );
 }

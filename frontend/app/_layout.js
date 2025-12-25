@@ -43,7 +43,7 @@ function NavigationContent() {
 
     return (
         <>
-            <StatusBar barStyle="light-content" backgroundColor="#1F8A70" />
+            <StatusBar barStyle="dark-content" backgroundColor="#1F8A70" />
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen
                     name="(auth)"
