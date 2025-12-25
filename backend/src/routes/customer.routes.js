@@ -1,6 +1,6 @@
 import express from 'express';
 import Customer from '../models/Customer.model.js';
-import { authenticateToken, authorizeRoles } from '../middleware/auth.middleware.js';
+import { authenticateToken, authorizeRoles } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 

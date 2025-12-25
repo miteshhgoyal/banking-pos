@@ -91,6 +91,26 @@ const collectionSchema = new mongoose.Schema({
         type: String,
         trim: true,
         default: ''
+    },
+    // NEW FIELDS FOR PHASE 2
+    status: {
+        type: String,
+        enum: ['completed', 'voided', 'cancelled'],
+        default: 'completed'
+    },
+    voidedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    voidedAt: {
+        type: Date,
+        default: null
+    },
+    voidReason: {
+        type: String,
+        trim: true,
+        default: ''
     }
 }, {
     timestamps: true

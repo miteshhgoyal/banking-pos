@@ -241,7 +241,8 @@ router.get('/:id', async (req, res) => {
     try {
         const collection = await Collection.findById(req.params.id)
             .populate('customer', 'name loanId accountNumber mobile address')
-            .populate('agent', 'name employeeId mobile branch');
+            .populate('agent', 'name employeeId mobile branch')
+            .populate('voidedBy', 'name employeeId');
 
         if (!collection) {
             return res.status(404).json({
@@ -298,9 +299,12 @@ router.get('/customer/:customerId', async (req, res) => {
 
         const collections = await Collection.find({ customer: customerId })
             .populate('agent', 'name employeeId')
+            .populate('voidedBy', 'name')
             .sort({ timestamp: -1 });
 
-        const totalCollected = collections.reduce((sum, col) => sum + col.collectionAmount, 0);
+        const totalCollected = collections.reduce((sum, col) => {
+            return col.status === 'completed' ? sum + col.collectionAmount : sum;
+        }, 0);
 
         res.json({
             success: true,
@@ -315,6 +319,112 @@ router.get('/customer/:customerId', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error fetching customer collection history'
+        });
+    }
+});
+
+// PUT /api/collections/:id - Update collection (admin only)
+router.put('/:id', authorizeRoles('admin', 'supervisor'), async (req, res) => {
+    try {
+        const collection = await Collection.findById(req.params.id);
+
+        if (!collection) {
+            return res.status(404).json({
+                success: false,
+                message: 'Collection not found'
+            });
+        }
+
+        if (collection.status === 'voided') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot edit a voided transaction'
+            });
+        }
+
+        const { collectionAmount, paymentMode, remarks } = req.body;
+
+        // Update allowed fields
+        if (collectionAmount !== undefined) collection.collectionAmount = collectionAmount;
+        if (paymentMode) collection.paymentMode = paymentMode;
+        if (remarks !== undefined) collection.remarks = remarks;
+
+        await collection.save();
+        await collection.populate(['customer', 'agent']);
+
+        res.json({
+            success: true,
+            message: 'Collection updated successfully',
+            data: {
+                collection
+            }
+        });
+    } catch (error) {
+        console.error('Update Collection Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating collection'
+        });
+    }
+});
+
+// DELETE /api/collections/:id - Void transaction (admin only)
+router.delete('/:id', authorizeRoles('admin', 'supervisor'), async (req, res) => {
+    try {
+        const collection = await Collection.findById(req.params.id).populate('customer');
+
+        if (!collection) {
+            return res.status(404).json({
+                success: false,
+                message: 'Collection not found'
+            });
+        }
+
+        if (collection.status === 'voided') {
+            return res.status(400).json({
+                success: false,
+                message: 'Transaction already voided'
+            });
+        }
+
+        const { reason } = req.body;
+
+        // Mark as voided
+        collection.status = 'voided';
+        collection.voidedBy = req.user._id;
+        collection.voidedAt = new Date();
+        collection.voidReason = reason || 'No reason provided';
+
+        await collection.save();
+
+        // Reverse the customer outstanding amount
+        const customer = await Customer.findById(collection.customer._id);
+        if (customer) {
+            customer.outstandingAmount += (collection.collectionAmount - collection.penaltyPaid);
+            customer.totalPaid -= (collection.collectionAmount - collection.penaltyPaid);
+            customer.penaltyAmount += collection.penaltyPaid;
+
+            if (customer.status === 'closed' && customer.outstandingAmount > 0) {
+                customer.status = 'active';
+            }
+
+            await customer.save();
+        }
+
+        await collection.populate('voidedBy', 'name employeeId');
+
+        res.json({
+            success: true,
+            message: 'Transaction voided successfully',
+            data: {
+                collection
+            }
+        });
+    } catch (error) {
+        console.error('Void Collection Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error voiding transaction'
         });
     }
 });
@@ -371,7 +481,8 @@ router.get('/stats/today', async (req, res) => {
             timestamp: {
                 $gte: today,
                 $lt: tomorrow
-            }
+            },
+            status: 'completed' // Only count completed transactions
         };
 
         // Agents see only their stats
