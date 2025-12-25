@@ -1,0 +1,9 @@
+node_modules
+files-content.txt
+.expo
+.env
+main.py
+raw
+raw.txt
+dump.txt
+dump
