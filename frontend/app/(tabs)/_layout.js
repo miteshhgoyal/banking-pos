@@ -4,13 +4,17 @@ import { Ionicons } from '@expo/vector-icons';
 export default function TabLayout() {
     const segments = useSegments();
 
-    // Hide tab bar when on payment or receipt screens
-    const hideTabBar = segments.includes('payment') || segments.includes('receipt');
+    // Hide tab bar when on payment, receipt, or customer detail screens
+    const hideTabBar = segments.includes('payment')
+        || segments.includes('receipt')
+        || segments.includes('add-customer')
+        || segments.includes('customer-details')
+        || segments.includes('edit-customer')
+        || segments.includes('customer-transactions');
 
     return (
         <Tabs
             screenOptions={{
-                // White theme with teal accent
                 tabBarActiveTintColor: '#1F8A70',
                 tabBarInactiveTintColor: '#9CA3AF',
                 tabBarStyle: {
@@ -34,7 +38,6 @@ export default function TabLayout() {
                 headerShadowColor: '#E5E7EB',
             }}
         >
-            {/* Home/Dashboard Tab - VISIBLE */}
             <Tabs.Screen
                 name="index"
                 options={{
@@ -46,7 +49,6 @@ export default function TabLayout() {
                 }}
             />
 
-            {/* Customers List Tab - VISIBLE */}
             <Tabs.Screen
                 name="customers"
                 options={{
@@ -58,7 +60,6 @@ export default function TabLayout() {
                 }}
             />
 
-            {/* Transaction History Tab - VISIBLE */}
             <Tabs.Screen
                 name="history"
                 options={{
@@ -70,7 +71,6 @@ export default function TabLayout() {
                 }}
             />
 
-            {/* Profile Tab - VISIBLE */}
             <Tabs.Screen
                 name="profile"
                 options={{
@@ -82,27 +82,13 @@ export default function TabLayout() {
                 }}
             />
 
-            <Tabs.Screen
-                name="payment"
-                options={{
-                    href: null,
-                    title: 'Payment',
-                    headerShown: false,
-                }}
-            />
-
-            <Tabs.Screen
-                name="receipt"
-                options={{
-                    href: null,
-                    title: 'Receipt',
-                    headerShown: false,
-                }}
-            />
-
-            <Tabs.Screen name="add-customer" options={{ href: null }} />
-            <Tabs.Screen name="customer-details" options={{ href: null }} />
-            <Tabs.Screen name="edit-customer" options={{ href: null }} />
+            {/* Hidden Screens */}
+            <Tabs.Screen name="payment" options={{ href: null, headerShown: false }} />
+            <Tabs.Screen name="receipt" options={{ href: null, headerShown: false }} />
+            <Tabs.Screen name="add-customer" options={{ href: null, headerShown: false }} />
+            <Tabs.Screen name="customer-details" options={{ href: null, headerShown: false }} />
+            <Tabs.Screen name="edit-customer" options={{ href: null, headerShown: false }} />
+            <Tabs.Screen name="customer-transactions" options={{ href: null, headerShown: false }} />
         </Tabs>
     );
 }

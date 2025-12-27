@@ -1,347 +1,307 @@
-import express from 'express';
-import Customer from '../models/Customer.model.js';
-import { authenticateToken, authorizeRoles } from '../middleware/auth.middleware.js';
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    ScrollView,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import api from '@/services/api';
 
-const router = express.Router();
+const InputField = ({
+    label,
+    value,
+    onChangeText,
+    placeholder,
+    keyboardType = 'default',
+    required = false,
+    maxLength,
+    loading = false
+}) => (
+    <View className="mb-4">
+        <Text className="text-sm font-semibold text-gray-700 mb-2">
+            {label} {required && <Text className="text-red-500">*</Text>}
+        </Text>
+        <TextInput
+            className="bg-gray-50 rounded-xl border border-gray-200 px-4 h-12 text-gray-800 text-base"
+            placeholder={placeholder}
+            placeholderTextColor="#9CA3AF"
+            value={value}
+            onChangeText={onChangeText}
+            keyboardType={keyboardType}
+            editable={!loading}
+            maxLength={maxLength}
+        />
+    </View>
+);
 
-// All routes require authentication
-router.use(authenticateToken);
+export default function AddCustomerScreen() {
+    const router = useRouter();
 
-// GET /api/customers - Get customer list with filters
-router.get('/', async (req, res) => {
-    try {
-        const { status, search, page = 1, limit = 50 } = req.query;
+    const [loading, setLoading] = useState(false);
 
-        const filter = {};
+    // Separate state for each field
+    const [name, setName] = useState('');
+    const [mobile, setMobile] = useState('');
+    const [aadhaar, setAadhaar] = useState('');
+    const [street, setStreet] = useState('');
+    const [city, setCity] = useState('');
+    const [state, setState] = useState('');
+    const [pincode, setPincode] = useState('');
+    const [loanAmount, setLoanAmount] = useState('');
+    const [tenure, setTenure] = useState('');
+    const [interestRate, setInterestRate] = useState('');
+    const [emiAmount, setEmiAmount] = useState('');
+    const [emiFrequency, setEmiFrequency] = useState('monthly');
 
-        // Agents can only see their assigned customers
-        if (req.user.role === 'agent') {
-            filter.assignedAgent = req.user._id;
+    const handleSubmit = async () => {
+        // Validation
+        if (!name || !mobile || !aadhaar) {
+            Alert.alert('Error', 'Please fill all required fields');
+            return;
         }
 
-        // Filter by status
-        if (status && ['active', 'closed', 'defaulter', 'npa'].includes(status)) {
-            filter.status = status;
+        if (!/^[0-9]{10}$/.test(mobile)) {
+            Alert.alert('Error', 'Mobile must be 10 digits');
+            return;
         }
 
-        // Search functionality
-        if (search) {
-            filter.$or = [
-                { loanId: { $regex: search, $options: 'i' } },
-                { accountNumber: { $regex: search, $options: 'i' } },
-                { name: { $regex: search, $options: 'i' } },
-                { mobile: { $regex: search, $options: 'i' } },
-                { aadhaar: { $regex: search, $options: 'i' } }
-            ];
+        if (!/^[0-9]{12}$/.test(aadhaar)) {
+            Alert.alert('Error', 'Aadhaar must be 12 digits');
+            return;
         }
 
-        // Get customers with pagination
-        const customers = await Customer.find(filter)
-            .populate('assignedAgent', 'name employeeId mobile')
-            .select('loanId accountNumber name mobile status outstandingAmount penaltyAmount loanDetails.emiAmount nextEmiDate')
-            .limit(Number(limit))
-            .skip((Number(page) - 1) * Number(limit))
-            .sort({ createdAt: -1 });
+        if (!loanAmount || !tenure || !interestRate || !emiAmount) {
+            Alert.alert('Error', 'Please fill all loan details');
+            return;
+        }
 
-        const totalCount = await Customer.countDocuments(filter);
+        try {
+            setLoading(true);
 
-        res.json({
-            success: true,
-            count: customers.length,
-            total: totalCount,
-            page: Number(page),
-            totalPages: Math.ceil(totalCount / Number(limit)),
-            data: {
-                customers
+            const response = await api.post('/customers', {
+                name: name,
+                mobile: mobile,
+                aadhaar: aadhaar,
+                address: {
+                    street: street,
+                    city: city,
+                    state: state,
+                    pincode: pincode
+                },
+                loanAmount: parseFloat(loanAmount),
+                disbursedDate: new Date().toISOString().split('T')[0],
+                tenure: parseInt(tenure),
+                interestRate: parseFloat(interestRate),
+                emiAmount: parseFloat(emiAmount),
+                emiFrequency: emiFrequency
+            });
+
+            if (response.data.success) {
+                Alert.alert('Success', 'Customer added successfully!', [
+                    { text: 'OK', onPress: () => router.back() }
+                ]);
             }
-        });
-    } catch (error) {
-        console.error('Get Customers Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching customers'
-        });
-    }
-});
-
-// GET /api/customers/search - Search customers
-router.get('/search', async (req, res) => {
-    try {
-        const { q } = req.query;
-
-        if (!q || q.trim().length < 3) {
-            return res.status(400).json({
-                success: false,
-                message: 'Search query must be at least 3 characters'
-            });
+        } catch (error) {
+            console.error('Add customer error:', error);
+            Alert.alert('Error', error.response?.data?.message || 'Failed to add customer');
+        } finally {
+            setLoading(false);
         }
+    };
 
-        const searchQuery = q.trim();
+    return (
+        <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                className="flex-1"
+            >
+                {/* Header */}
+                <View className="flex-row items-center px-5 py-4 border-b border-gray-200">
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Ionicons name="arrow-back" size={24} color="#1F2937" />
+                    </TouchableOpacity>
+                    <Text className="text-xl font-bold text-gray-800 ml-4">
+                        Add New Customer
+                    </Text>
+                </View>
 
-        const filter = {
-            $or: [
-                { loanId: { $regex: searchQuery, $options: 'i' } },
-                { accountNumber: { $regex: searchQuery, $options: 'i' } },
-                { name: { $regex: searchQuery, $options: 'i' } },
-                { mobile: { $regex: searchQuery, $options: 'i' } },
-                { aadhaar: { $regex: searchQuery, $options: 'i' } }
-            ]
-        };
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ padding: 20 }}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Basic Information */}
+                    <Text className="text-base font-bold text-gray-800 mb-4">
+                        Basic Information
+                    </Text>
 
-        // Agents can only search their assigned customers
-        if (req.user.role === 'agent') {
-            filter.assignedAgent = req.user._id;
-        }
+                    <InputField
+                        label="Customer Name"
+                        value={name}
+                        onChangeText={setName}
+                        placeholder="Full name"
+                        required
+                        loading={loading}
+                    />
 
-        const customers = await Customer.find(filter)
-            .populate('assignedAgent', 'name employeeId')
-            .select('loanId accountNumber name mobile status outstandingAmount penaltyAmount loanDetails.emiAmount')
-            .limit(20)
-            .sort({ name: 1 });
+                    <InputField
+                        label="Mobile Number"
+                        value={mobile}
+                        onChangeText={setMobile}
+                        placeholder="10-digit mobile"
+                        keyboardType="phone-pad"
+                        maxLength={10}
+                        required
+                        loading={loading}
+                    />
 
-        res.json({
-            success: true,
-            count: customers.length,
-            data: {
-                customers
-            }
-        });
-    } catch (error) {
-        console.error('Search Customers Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error searching customers'
-        });
-    }
-});
+                    <InputField
+                        label="Aadhaar Number"
+                        value={aadhaar}
+                        onChangeText={setAadhaar}
+                        placeholder="12-digit aadhaar"
+                        keyboardType="number-pad"
+                        maxLength={12}
+                        required
+                        loading={loading}
+                    />
 
-// GET /api/customers/:id - Get single customer details
-router.get('/:id', async (req, res) => {
-    try {
-        const customer = await Customer.findById(req.params.id)
-            .populate('assignedAgent', 'name employeeId mobile');
+                    {/* Address */}
+                    <Text className="text-base font-bold text-gray-800 mt-4 mb-4">
+                        Address
+                    </Text>
 
-        if (!customer) {
-            return res.status(404).json({
-                success: false,
-                message: 'Customer not found'
-            });
-        }
+                    <InputField
+                        label="Street"
+                        value={street}
+                        onChangeText={setStreet}
+                        placeholder="Street address"
+                        loading={loading}
+                    />
 
-        // Check if agent has access to this customer
-        if (req.user.role === 'agent' && customer.assignedAgent._id.toString() !== req.user._id.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'You do not have access to this customer'
-            });
-        }
+                    <View className="flex-row gap-3">
+                        <View className="flex-1">
+                            <InputField
+                                label="City"
+                                value={city}
+                                onChangeText={setCity}
+                                placeholder="City"
+                                loading={loading}
+                            />
+                        </View>
+                        <View className="flex-1">
+                            <InputField
+                                label="State"
+                                value={state}
+                                onChangeText={setState}
+                                placeholder="State"
+                                loading={loading}
+                            />
+                        </View>
+                    </View>
 
-        res.json({
-            success: true,
-            data: {
-                customer
-            }
-        });
-    } catch (error) {
-        console.error('Get Customer Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching customer details'
-        });
-    }
-});
+                    <InputField
+                        label="Pincode"
+                        value={pincode}
+                        onChangeText={setPincode}
+                        placeholder="6-digit pincode"
+                        keyboardType="number-pad"
+                        maxLength={6}
+                        loading={loading}
+                    />
 
-// POST /api/customers - Create new customer/loan account
-router.post('/', async (req, res) => {
-    try {
-        const {
-            loanId,
-            accountNumber,
-            name,
-            mobile,
-            aadhaar,
-            address,
-            loanAmount,
-            disbursedDate,
-            tenure,
-            interestRate,
-            emiAmount,
-            emiFrequency,
-            assignedAgent
-        } = req.body;
+                    {/* Loan Details */}
+                    <Text className="text-base font-bold text-gray-800 mt-4 mb-4">
+                        Loan Details
+                    </Text>
 
-        // Create customer
-        const customer = await Customer.create({
-            loanId,
-            accountNumber,
-            name,
-            mobile,
-            aadhaar,
-            address: address || {},
-            loanDetails: {
-                loanAmount,
-                disbursedDate,
-                tenure,
-                interestRate,
-                emiAmount,
-                emiFrequency: emiFrequency || 'monthly'
-            },
-            outstandingAmount: loanAmount,
-            assignedAgent: assignedAgent || req.user._id
-        });
+                    <InputField
+                        label="Loan Amount"
+                        value={loanAmount}
+                        onChangeText={setLoanAmount}
+                        placeholder="Total loan amount"
+                        keyboardType="numeric"
+                        required
+                        loading={loading}
+                    />
 
-        await customer.populate('assignedAgent', 'name employeeId');
+                    <InputField
+                        label="Tenure (Months)"
+                        value={tenure}
+                        onChangeText={setTenure}
+                        placeholder="Number of months"
+                        keyboardType="numeric"
+                        required
+                        loading={loading}
+                    />
 
-        res.status(201).json({
-            success: true,
-            message: 'Customer created successfully',
-            data: {
-                customer
-            }
-        });
-    } catch (error) {
-        console.error('Create Customer Error:', error);
+                    <InputField
+                        label="Interest Rate (%)"
+                        value={interestRate}
+                        onChangeText={setInterestRate}
+                        placeholder="Annual interest rate"
+                        keyboardType="numeric"
+                        required
+                        loading={loading}
+                    />
 
-        if (error.name === 'ValidationError') {
-            const messages = Object.values(error.errors).map(err => err.message);
-            return res.status(400).json({
-                success: false,
-                message: messages.join(', ')
-            });
-        }
+                    <InputField
+                        label="EMI Amount"
+                        value={emiAmount}
+                        onChangeText={setEmiAmount}
+                        placeholder="Monthly EMI amount"
+                        keyboardType="numeric"
+                        required
+                        loading={loading}
+                    />
 
-        if (error.code === 11000) {
-            const field = Object.keys(error.keyPattern)[0];
-            return res.status(400).json({
-                success: false,
-                message: `${field} already exists`
-            });
-        }
+                    {/* EMI Frequency */}
+                    <Text className="text-sm font-semibold text-gray-700 mb-2">
+                        EMI Frequency <Text className="text-red-500">*</Text>
+                    </Text>
+                    <View className="flex-row gap-2 mb-6">
+                        {['daily', 'weekly', 'monthly'].map((freq) => (
+                            <TouchableOpacity
+                                key={freq}
+                                className={`flex-1 py-3 rounded-xl items-center ${emiFrequency === freq ? 'bg-[#1F8A70]' : 'bg-gray-100'
+                                    }`}
+                                onPress={() => setEmiFrequency(freq)}
+                                disabled={loading}
+                            >
+                                <Text
+                                    className={`text-sm font-semibold capitalize ${emiFrequency === freq ? 'text-white' : 'text-gray-500'
+                                        }`}
+                                >
+                                    {freq}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
 
-        res.status(500).json({
-            success: false,
-            message: 'Error creating customer'
-        });
-    }
-});
-
-// PUT /api/customers/:id - Update customer details
-router.put('/:id', async (req, res) => {
-    try {
-        const customer = await Customer.findById(req.params.id);
-
-        if (!customer) {
-            return res.status(404).json({
-                success: false,
-                message: 'Customer not found'
-            });
-        }
-
-        // Check access permissions
-        if (req.user.role === 'agent' && customer.assignedAgent.toString() !== req.user._id.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'You do not have permission to update this customer'
-            });
-        }
-
-        const {
-            name,
-            mobile,
-            aadhaar,
-            address,
-            loanAmount,
-            tenure,
-            interestRate,
-            emiAmount,
-            emiFrequency,
-            status
-        } = req.body;
-
-        // Update basic fields
-        if (name) customer.name = name;
-        if (mobile) customer.mobile = mobile;
-        if (aadhaar) customer.aadhaar = aadhaar;
-        if (address) customer.address = { ...customer.address, ...address };
-
-        // Update loan details
-        if (loanAmount !== undefined) customer.loanDetails.loanAmount = loanAmount;
-        if (tenure !== undefined) customer.loanDetails.tenure = tenure;
-        if (interestRate !== undefined) customer.loanDetails.interestRate = interestRate;
-        if (emiAmount !== undefined) customer.loanDetails.emiAmount = emiAmount;
-        if (emiFrequency) customer.loanDetails.emiFrequency = emiFrequency;
-
-        // Update status (admin/supervisor only)
-        if (status && ['admin', 'supervisor'].includes(req.user.role)) {
-            customer.status = status;
-        }
-
-        await customer.save();
-        await customer.populate('assignedAgent', 'name employeeId mobile');
-
-        res.json({
-            success: true,
-            message: 'Customer updated successfully',
-            data: {
-                customer
-            }
-        });
-    } catch (error) {
-        console.error('Update Customer Error:', error);
-
-        if (error.name === 'ValidationError') {
-            const messages = Object.values(error.errors).map(err => err.message);
-            return res.status(400).json({
-                success: false,
-                message: messages.join(', ')
-            });
-        }
-
-        if (error.code === 11000) {
-            const field = Object.keys(error.keyPattern)[0];
-            return res.status(400).json({
-                success: false,
-                message: `${field} already exists`
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            message: 'Error updating customer'
-        });
-    }
-});
-
-// DELETE /api/customers/:id - Delete/deactivate customer
-router.delete('/:id', authorizeRoles('admin', 'supervisor'), async (req, res) => {
-    try {
-        const customer = await Customer.findById(req.params.id);
-
-        if (!customer) {
-            return res.status(404).json({
-                success: false,
-                message: 'Customer not found'
-            });
-        }
-
-        // Soft delete - just mark as inactive
-        customer.status = 'closed';
-        await customer.save();
-
-        // Or hard delete (uncomment if needed)
-        // await Customer.findByIdAndDelete(req.params.id);
-
-        res.json({
-            success: true,
-            message: 'Customer deleted successfully'
-        });
-    } catch (error) {
-        console.error('Delete Customer Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting customer'
-        });
-    }
-});
-
-export default router;
+                    {/* Submit Button */}
+                    <TouchableOpacity
+                        className="bg-[#1F8A70] rounded-xl h-14 items-center justify-center mt-2 mb-5"
+                        onPress={handleSubmit}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                            <Text className="text-white text-lg font-bold">
+                                Add Customer
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    );
+}

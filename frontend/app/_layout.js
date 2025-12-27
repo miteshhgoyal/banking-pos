@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Stack, useSegments, useRouter, useRootNavigationState } from 'expo-router';
 import { StatusBar, View, ActivityIndicator } from 'react-native';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import './globals.css';
 
 function NavigationContent() {
     const { isAuthenticated, loading } = useAuth();

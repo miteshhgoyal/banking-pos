@@ -77,7 +77,6 @@ router.get('/search', async (req, res) => {
         }
 
         const searchQuery = q.trim();
-
         const filter = {
             $or: [
                 { loanId: { $regex: searchQuery, $options: 'i' } },
@@ -155,8 +154,6 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const {
-            loanId,
-            accountNumber,
             name,
             mobile,
             aadhaar,
@@ -170,10 +167,8 @@ router.post('/', async (req, res) => {
             assignedAgent
         } = req.body;
 
-        // Create customer
+        // Create customer (loanId and accountNumber will be auto-generated)
         const customer = await Customer.create({
-            loanId,
-            accountNumber,
             name,
             mobile,
             aadhaar,
@@ -327,9 +322,6 @@ router.delete('/:id', authorizeRoles('admin', 'supervisor'), async (req, res) =>
         // Soft delete - just mark as inactive
         customer.status = 'closed';
         await customer.save();
-
-        // Or hard delete (uncomment if needed)
-        // await Customer.findByIdAndDelete(req.params.id);
 
         res.json({
             success: true,

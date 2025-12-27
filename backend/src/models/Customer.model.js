@@ -1,9 +1,16 @@
 import mongoose from 'mongoose';
 
+// Counter schema for auto-increment IDs
+const counterSchema = new mongoose.Schema({
+    _id: String,
+    seq: { type: Number, default: 0 }
+});
+
+const Counter = mongoose.model('Counter', counterSchema);
+
 const customerSchema = new mongoose.Schema({
     loanId: {
         type: String,
-        required: [true, 'Loan ID is required'],
         unique: true,
         uppercase: true,
         trim: true,
@@ -11,7 +18,6 @@ const customerSchema = new mongoose.Schema({
     },
     accountNumber: {
         type: String,
-        required: [true, 'Account Number is required'],
         unique: true,
         uppercase: true,
         trim: true,
@@ -104,28 +110,53 @@ const customerSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Calculate next EMI date before saving
-customerSchema.pre('save', function (next) {
-    if (this.isModified('loanDetails.emiFrequency') || !this.nextEmiDate) {
-        const now = new Date();
-        const nextDate = new Date(now);
+// Pre-save hook to auto-generate loanId, accountNumber, and calculate next EMI date
+customerSchema.pre('save', async function (next) {
+    try {
+        // Generate loanId and accountNumber for new customers only
+        if (this.isNew) {
+            // Generate Loan ID
+            const loanCounter = await Counter.findByIdAndUpdate(
+                { _id: 'loanId' },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
+            );
+            this.loanId = `LOAN${String(loanCounter.seq).padStart(6, '0')}`;
 
-        switch (this.loanDetails.emiFrequency) {
-            case 'daily':
-                nextDate.setDate(nextDate.getDate() + 1);
-                break;
-            case 'weekly':
-                nextDate.setDate(nextDate.getDate() + 7);
-                break;
-            case 'monthly':
-            default:
-                nextDate.setMonth(nextDate.getMonth() + 1);
-                break;
+            // Generate Account Number
+            const accCounter = await Counter.findByIdAndUpdate(
+                { _id: 'accountNumber' },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
+            );
+            this.accountNumber = `ACC${String(accCounter.seq).padStart(8, '0')}`;
         }
 
-        this.nextEmiDate = nextDate;
+        // Calculate next EMI date
+        if (this.isModified('loanDetails.emiFrequency') || !this.nextEmiDate) {
+            const now = new Date();
+            const nextDate = new Date(now);
+
+            switch (this.loanDetails.emiFrequency) {
+                case 'daily':
+                    nextDate.setDate(nextDate.getDate() + 1);
+                    break;
+                case 'weekly':
+                    nextDate.setDate(nextDate.getDate() + 7);
+                    break;
+                case 'monthly':
+                default:
+                    nextDate.setMonth(nextDate.getMonth() + 1);
+                    break;
+            }
+
+            this.nextEmiDate = nextDate;
+        }
+
+        next();
+    } catch (error) {
+        next(error);
     }
-    next();
 });
 
 const Customer = mongoose.model('Customer', customerSchema);
