@@ -27,7 +27,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request Logging Middleware
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    // console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
 });
 

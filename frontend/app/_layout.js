@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Stack, useSegments, useRouter, useRootNavigationState } from 'expo-router';
-import { StatusBar, View, ActivityIndicator } from 'react-native';
+import { StatusBar, View, ActivityIndicator, Text } from 'react-native';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import './globals.css';
 
@@ -23,28 +23,38 @@ function NavigationContent() {
         }
 
         const inAuthGroup = segments[0] === '(auth)';
-        const inTabsGroup = segments[0] === '(tabs)';
 
         if (!isAuthenticated && !inAuthGroup) {
-            // User is not authenticated, redirect to login
             router.replace('/(auth)/login');
         } else if (isAuthenticated && inAuthGroup) {
-            // User is authenticated but on auth screen, redirect to tabs
             router.replace('/(tabs)');
         }
     }, [isAuthenticated, segments, isNavigationReady, loading]);
 
     if (!isNavigationReady || loading) {
         return (
-            <View style={{ flex: 1, backgroundColor: '#1F8A70', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{
+                flex: 1,
+                backgroundColor: '#1F8A70',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
                 <ActivityIndicator size="large" color="#FFFFFF" />
+                <Text style={{
+                    color: '#FFFFFF',
+                    marginTop: 16,
+                    fontSize: 16,
+                    fontWeight: '600'
+                }}>
+                    {loading ? 'Loading...' : 'Initializing...'}
+                </Text>
             </View>
         );
     }
 
     return (
         <>
-            <StatusBar barStyle="dark-content" backgroundColor="#1F8A70" />
+            <StatusBar barStyle="light-content" backgroundColor="#1F8A70" />
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen
                     name="(auth)"
@@ -58,6 +68,12 @@ function NavigationContent() {
                     options={{
                         headerShown: false,
                         animation: 'fade'
+                    }}
+                />
+                <Stack.Screen
+                    name="index"
+                    options={{
+                        headerShown: false
                     }}
                 />
             </Stack>

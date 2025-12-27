@@ -1,46 +1,59 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const TOKEN_KEY = 'accessToken';
+const USER_KEY = 'user';
+
 export const tokenService = {
     getToken: async () => {
         try {
-            return await AsyncStorage.getItem('accessToken');
+            return await AsyncStorage.getItem(TOKEN_KEY);
         } catch (error) {
-            console.error('Error getting access token:', error);
             return null;
         }
     },
 
     setToken: async (token) => {
         try {
-            await AsyncStorage.setItem('accessToken', token);
+            await AsyncStorage.setItem(TOKEN_KEY, token);
+            return true;
         } catch (error) {
-            console.error('Error setting access token:', error);
+            return false;
         }
     },
 
     getUser: async () => {
         try {
-            const userString = await AsyncStorage.getItem('user');
-            return userString ? JSON.parse(userString) : null;
+            const userJson = await AsyncStorage.getItem(USER_KEY);
+            return userJson ? JSON.parse(userJson) : null;
         } catch (error) {
-            console.error('Error getting user:', error);
             return null;
         }
     },
 
     setUser: async (user) => {
         try {
-            await AsyncStorage.setItem('user', JSON.stringify(user));
+            await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+            return true;
         } catch (error) {
-            console.error('Error setting user:', error);
+            return false;
         }
     },
 
     clearTokens: async () => {
         try {
-            await AsyncStorage.multiRemove(['accessToken', 'user']);
+            await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
+            return true;
         } catch (error) {
-            console.error('Error clearing tokens:', error);
+            return false;
+        }
+    },
+
+    hasToken: async () => {
+        try {
+            const token = await AsyncStorage.getItem(TOKEN_KEY);
+            return !!token;
+        } catch (error) {
+            return false;
         }
     }
 };

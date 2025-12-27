@@ -1,10 +1,7 @@
-
 import axios from 'axios';
-import { tokenService } from './tokenService.js';
+import { tokenService } from './tokenService';
 
-const API_BASE_URL = 'http://192.168.1.66:5000/api';
-// For production or deployment, update to your server URL
-// const API_BASE_URL = 'https://your-backend-url.com/api';
+const API_BASE_URL = 'https://pos-api.ott-tube.in/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -14,7 +11,6 @@ const api = axios.create({
     },
 });
 
-// Request interceptor to add auth token
 api.interceptors.request.use(
     async (config) => {
         const token = await tokenService.getToken();
@@ -28,14 +24,20 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor to handle errors
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        if (error.response?.status === 401) {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
             await tokenService.clearTokens();
-            // Force logout handled by auth context
         }
+
+        if (error.response?.status === 403) {
+            await tokenService.clearTokens();
+        }
+
         return Promise.reject(error);
     }
 );

@@ -8,7 +8,142 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticateToken);
 
-// POST /api/collections - Record new collection (Payment Screen)
+// ⚠️ IMPORTANT: Place specific routes BEFORE parameterized routes
+// GET /api/collections/stats/today - MOVED TO TOP
+router.get('/stats/today', async (req, res) => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const filter = {
+            timestamp: {
+                $gte: today,
+                $lt: tomorrow
+            },
+            status: 'completed'
+        };
+
+        // Agents see only their stats
+        if (req.user.role === 'agent') {
+            filter.agent = req.user._id;
+        }
+
+        const stats = await Collection.aggregate([
+            { $match: filter },
+            {
+                $group: {
+                    _id: null,
+                    totalCollections: { $sum: 1 },
+                    totalAmount: { $sum: '$collectionAmount' },
+                    cashAmount: {
+                        $sum: { $cond: [{ $eq: ['$paymentMode', 'cash'] }, '$collectionAmount', 0] }
+                    },
+                    upiAmount: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $or: [
+                                        { $eq: ['$paymentMode', 'upi'] },
+                                        { $eq: ['$paymentMode', 'qr'] }
+                                    ]
+                                },
+                                '$collectionAmount',
+                                0
+                            ]
+                        }
+                    },
+                    cardAmount: {
+                        $sum: { $cond: [{ $eq: ['$paymentMode', 'card'] }, '$collectionAmount', 0] }
+                    },
+                    partialPayments: {
+                        $sum: { $cond: ['$isPartialPayment', 1, 0] }
+                    }
+                }
+            }
+        ]);
+
+        // ✅ FIX: Provide default values when no data exists
+        const defaultStats = {
+            totalCollections: 0,
+            totalAmount: 0,
+            cashAmount: 0,
+            upiAmount: 0,
+            cardAmount: 0,
+            partialPayments: 0
+        };
+
+        res.json({
+            success: true,
+            data: {
+                stats: stats.length > 0 ? stats[0] : defaultStats
+            }
+        });
+    } catch (error) {
+        console.error('Get Stats Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching statistics',
+            error: error.message
+        });
+    }
+});
+
+// GET /api/collections/customer/:customerId - MOVED BEFORE /:id
+router.get('/customer/:customerId', async (req, res) => {
+    try {
+        const { customerId } = req.params;
+
+        const customer = await Customer.findById(customerId);
+
+        if (!customer) {
+            return res.status(404).json({
+                success: false,
+                message: 'Customer not found'
+            });
+        }
+
+        // Check access
+        if (req.user.role === 'agent' && customer.assignedAgent.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have access to this customer'
+            });
+        }
+
+        const collections = await Collection.find({
+            customer: customerId,
+            status: { $ne: 'voided' } // ✅ FIX: Exclude voided transactions
+        })
+            .populate('agent', 'name')
+            .populate('voidedBy', 'name')
+            .sort({ timestamp: -1 });
+
+        const totalCollected = collections.reduce((sum, col) => {
+            return col.status === 'completed' ? sum + col.collectionAmount : sum;
+        }, 0);
+
+        res.json({
+            success: true,
+            count: collections.length,
+            totalCollected,
+            data: {
+                collections
+            }
+        });
+    } catch (error) {
+        console.error('Get Customer Collections Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching customer collection history',
+            error: error.message
+        });
+    }
+});
+
+// POST /api/collections - Record new collection
 router.post('/', async (req, res) => {
     try {
         const {
@@ -30,6 +165,7 @@ router.post('/', async (req, res) => {
             });
         }
 
+        // ✅ FIX: Support 'qr' payment mode
         if (!['cash', 'upi', 'qr', 'card'].includes(paymentMode)) {
             return res.status(400).json({
                 success: false,
@@ -37,7 +173,6 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Fetch customer
         const customer = await Customer.findById(customerId);
 
         if (!customer) {
@@ -63,10 +198,11 @@ router.post('/', async (req, res) => {
             });
         }
 
-        if (collectionAmount > customer.outstandingAmount + customer.penaltyAmount) {
+        const totalDue = customer.outstandingAmount + customer.penaltyAmount;
+        if (collectionAmount > totalDue) {
             return res.status(400).json({
                 success: false,
-                message: 'Collection amount exceeds total due amount'
+                message: `Collection amount exceeds total due amount (₹${totalDue})`
             });
         }
 
@@ -109,7 +245,7 @@ router.post('/', async (req, res) => {
         customer.penaltyAmount = Math.max(0, customer.penaltyAmount - penaltyPaid);
 
         // Update status
-        if (customer.outstandingAmount === 0) {
+        if (customer.outstandingAmount === 0 && customer.penaltyAmount === 0) {
             customer.status = 'closed';
         }
 
@@ -147,7 +283,8 @@ router.post('/', async (req, res) => {
 
         res.status(500).json({
             success: false,
-            message: 'Error recording collection'
+            message: 'Error recording collection',
+            error: error.message
         });
     }
 });
@@ -164,7 +301,6 @@ router.get('/', async (req, res) => {
             limit = 50
         } = req.query;
 
-        // Build filter
         const filter = {};
 
         // Agents can only see their own collections
@@ -193,7 +329,9 @@ router.get('/', async (req, res) => {
             }
         }
 
-        // Get collections with pagination
+        // ✅ FIX: Only show completed collections by default
+        filter.status = { $ne: 'voided' };
+
         const collections = await Collection.find(filter)
             .populate('customer', 'name loanId accountNumber mobile')
             .populate('agent', 'name')
@@ -205,7 +343,7 @@ router.get('/', async (req, res) => {
         const totalCount = await Collection.countDocuments(filter);
 
         // Calculate summary
-        const summary = await Collection.aggregate([
+        const summaryData = await Collection.aggregate([
             { $match: filter },
             {
                 $group: {
@@ -222,7 +360,7 @@ router.get('/', async (req, res) => {
             total: totalCount,
             page: Number(page),
             totalPages: Math.ceil(totalCount / Number(limit)),
-            summary: summary[0] || { totalAmount: 0, totalTransactions: 0 },
+            summary: summaryData.length > 0 ? summaryData[0] : { totalAmount: 0, totalTransactions: 0 },
             data: {
                 collections
             }
@@ -231,17 +369,18 @@ router.get('/', async (req, res) => {
         console.error('Get Collections Error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error fetching collections'
+            message: 'Error fetching collections',
+            error: error.message
         });
     }
 });
 
-// GET /api/collections/:id - Get single collection/receipt details
+// GET /api/collections/:id - Get single collection (MOVED TO END)
 router.get('/:id', async (req, res) => {
     try {
         const collection = await Collection.findById(req.params.id)
             .populate('customer', 'name loanId accountNumber mobile address')
-            .populate('agent', 'name mobile branch')
+            .populate('agent', 'name mobile')
             .populate('voidedBy', 'name');
 
         if (!collection) {
@@ -269,56 +408,8 @@ router.get('/:id', async (req, res) => {
         console.error('Get Collection Error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error fetching collection details'
-        });
-    }
-});
-
-// GET /api/collections/customer/:customerId - Get collection history for specific customer
-router.get('/customer/:customerId', async (req, res) => {
-    try {
-        const { customerId } = req.params;
-
-        // Check if customer exists
-        const customer = await Customer.findById(customerId);
-
-        if (!customer) {
-            return res.status(404).json({
-                success: false,
-                message: 'Customer not found'
-            });
-        }
-
-        // Check access
-        if (req.user.role === 'agent' && customer.assignedAgent.toString() !== req.user._id.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'You do not have access to this customer'
-            });
-        }
-
-        const collections = await Collection.find({ customer: customerId })
-            .populate('agent', 'name')
-            .populate('voidedBy', 'name')
-            .sort({ timestamp: -1 });
-
-        const totalCollected = collections.reduce((sum, col) => {
-            return col.status === 'completed' ? sum + col.collectionAmount : sum;
-        }, 0);
-
-        res.json({
-            success: true,
-            count: collections.length,
-            totalCollected,
-            data: {
-                collections
-            }
-        });
-    } catch (error) {
-        console.error('Get Customer Collections Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching customer collection history'
+            message: 'Error fetching collection details',
+            error: error.message
         });
     }
 });
@@ -363,7 +454,8 @@ router.put('/:id', authorizeRoles('admin', 'supervisor'), async (req, res) => {
         console.error('Update Collection Error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error updating collection'
+            message: 'Error updating collection',
+            error: error.message
         });
     }
 });
@@ -424,7 +516,8 @@ router.delete('/:id', authorizeRoles('admin', 'supervisor'), async (req, res) =>
         console.error('Void Collection Error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error voiding transaction'
+            message: 'Error voiding transaction',
+            error: error.message
         });
     }
 });
@@ -463,78 +556,8 @@ router.put('/:id/receipt', async (req, res) => {
         console.error('Update Receipt Status Error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error updating receipt status'
-        });
-    }
-});
-
-// GET /api/collections/stats/today - Get today's collection statistics
-router.get('/stats/today', async (req, res) => {
-    try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const filter = {
-            timestamp: {
-                $gte: today,
-                $lt: tomorrow
-            },
-            status: 'completed' // Only count completed transactions
-        };
-
-        // Agents see only their stats
-        if (req.user.role === 'agent') {
-            filter.agent = req.user._id;
-        }
-
-        const stats = await Collection.aggregate([
-            { $match: filter },
-            {
-                $group: {
-                    _id: null,
-                    totalCollections: { $sum: 1 },
-                    totalAmount: { $sum: '$collectionAmount' },
-                    cashAmount: {
-                        $sum: { $cond: [{ $eq: ['$paymentMode', 'cash'] }, '$collectionAmount', 0] }
-                    },
-                    upiAmount: {
-                        $sum: { $cond: [{ $eq: ['$paymentMode', 'upi'] }, '$collectionAmount', 0] }
-                    },
-                    qrAmount: {
-                        $sum: { $cond: [{ $eq: ['$paymentMode', 'qr'] }, '$collectionAmount', 0] }
-                    },
-                    cardAmount: {
-                        $sum: { $cond: [{ $eq: ['$paymentMode', 'card'] }, '$collectionAmount', 0] }
-                    },
-                    partialPayments: {
-                        $sum: { $cond: ['$isPartialPayment', 1, 0] }
-                    }
-                }
-            }
-        ]);
-
-        res.json({
-            success: true,
-            data: {
-                stats: stats[0] || {
-                    totalCollections: 0,
-                    totalAmount: 0,
-                    cashAmount: 0,
-                    upiAmount: 0,
-                    qrAmount: 0,
-                    cardAmount: 0,
-                    partialPayments: 0
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Get Stats Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching statistics'
+            message: 'Error updating receipt status',
+            error: error.message
         });
     }
 });
