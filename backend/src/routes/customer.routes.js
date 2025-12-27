@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
 
         // Get customers with pagination
         const customers = await Customer.find(filter)
-            .populate('assignedAgent', 'name employeeId mobile')
+            .populate('assignedAgent', 'name mobile')
             .select('loanId accountNumber name mobile status outstandingAmount penaltyAmount loanDetails.emiAmount nextEmiDate')
             .limit(Number(limit))
             .skip((Number(page) - 1) * Number(limit))
@@ -93,7 +93,7 @@ router.get('/search', async (req, res) => {
         }
 
         const customers = await Customer.find(filter)
-            .populate('assignedAgent', 'name employeeId')
+            .populate('assignedAgent', 'name')
             .select('loanId accountNumber name mobile status outstandingAmount penaltyAmount loanDetails.emiAmount')
             .limit(20)
             .sort({ name: 1 });
@@ -118,7 +118,7 @@ router.get('/search', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const customer = await Customer.findById(req.params.id)
-            .populate('assignedAgent', 'name employeeId mobile');
+            .populate('assignedAgent', 'name mobile');
 
         if (!customer) {
             return res.status(404).json({
@@ -185,7 +185,7 @@ router.post('/', async (req, res) => {
             assignedAgent: assignedAgent || req.user._id
         });
 
-        await customer.populate('assignedAgent', 'name employeeId');
+        await customer.populate('assignedAgent', 'name');
 
         res.status(201).json({
             success: true,
@@ -272,7 +272,7 @@ router.put('/:id', async (req, res) => {
         }
 
         await customer.save();
-        await customer.populate('assignedAgent', 'name employeeId mobile');
+        await customer.populate('assignedAgent', 'name mobile');
 
         res.json({
             success: true,

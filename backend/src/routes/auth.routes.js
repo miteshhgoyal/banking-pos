@@ -64,7 +64,6 @@ router.post('/signup', async (req, res) => {
                     email: user.email,
                     mobile: user.mobile,
                     role: user.role,
-                    employeeId: user.employeeId,
                     branch: user.branch,
                     assignedArea: user.assignedArea
                 },
@@ -168,7 +167,6 @@ router.post('/login', async (req, res) => {
                     email: user.email,
                     mobile: user.mobile,
                     role: user.role,
-                    employeeId: user.employeeId,
                     branch: user.branch,
                     assignedArea: user.assignedArea,
                     deviceId: user.deviceId
@@ -197,7 +195,6 @@ router.get('/me', authenticateToken, async (req, res) => {
                     email: req.user.email,
                     mobile: req.user.mobile,
                     role: req.user.role,
-                    employeeId: req.user.employeeId,
                     branch: req.user.branch,
                     assignedArea: req.user.assignedArea,
                     deviceId: req.user.deviceId,

@@ -65,7 +65,6 @@ export default function HomeScreen() {
                 <View style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
                     <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 4 }}>Welcome back,</Text>
                     <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1F2937' }}>{user?.name}</Text>
-                    <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 2 }}>Employee ID: {user?.employeeId}</Text>
                 </View>
 
                 {/* Today's Stats Card */}

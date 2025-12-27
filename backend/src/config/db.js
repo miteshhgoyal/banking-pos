@@ -49,8 +49,7 @@ const seedAdminUser = async () => {
             email: adminEmail,
             mobile: adminMobile,
             password: hashedPassword,
-            role: 'admin',
-            employeeId: 'ADMIN001',
+            role: 'admin',            
             branch: 'Head Office',
             isActive: true
         });

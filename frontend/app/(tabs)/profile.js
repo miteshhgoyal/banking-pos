@@ -73,7 +73,6 @@ export default function ProfileScreen() {
                     <ProfileRow icon="person-outline" label="Full Name" value={user?.name} />
                     <ProfileRow icon="mail-outline" label="Email Address" value={user?.email} />
                     <ProfileRow icon="call-outline" label="Mobile Number" value={user?.mobile} />
-                    <ProfileRow icon="id-card-outline" label="Employee ID" value={user?.employeeId} />
                     <ProfileRow icon="business-outline" label="Branch" value={user?.branch} />
                     <ProfileRow icon="location-outline" label="Assigned Area" value={user?.assignedArea} />
                     <ProfileRow icon="phone-portrait-outline" label="Device ID" value={user?.deviceId} />

@@ -33,11 +33,6 @@ const userSchema = new mongoose.Schema({
         enum: ['agent', 'supervisor', 'admin'],
         default: 'agent'
     },
-    employeeId: {
-        type: String,
-        unique: true,
-        required: [true, 'Employee ID is required']
-    },
     deviceId: {
         type: String,
         default: null
@@ -75,14 +70,6 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
-
-// Generate employee ID if not provided
-userSchema.pre('validate', function (next) {
-    if (!this.employeeId) {
-        this.employeeId = `EMP${Date.now().toString().slice(-6)}`;
-    }
-    next();
-});
 
 const User = mongoose.model('User', userSchema);
 

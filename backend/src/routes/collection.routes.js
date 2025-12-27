@@ -118,7 +118,7 @@ router.post('/', async (req, res) => {
         // Populate collection data
         await collection.populate([
             { path: 'customer', select: 'name loanId accountNumber mobile' },
-            { path: 'agent', select: 'name employeeId' }
+            { path: 'agent', select: 'name' }
         ]);
 
         res.status(201).json({
@@ -196,7 +196,7 @@ router.get('/', async (req, res) => {
         // Get collections with pagination
         const collections = await Collection.find(filter)
             .populate('customer', 'name loanId accountNumber mobile')
-            .populate('agent', 'name employeeId')
+            .populate('agent', 'name')
             .select('-location.coordinates')
             .limit(Number(limit))
             .skip((Number(page) - 1) * Number(limit))
@@ -241,8 +241,8 @@ router.get('/:id', async (req, res) => {
     try {
         const collection = await Collection.findById(req.params.id)
             .populate('customer', 'name loanId accountNumber mobile address')
-            .populate('agent', 'name employeeId mobile branch')
-            .populate('voidedBy', 'name employeeId');
+            .populate('agent', 'name mobile branch')
+            .populate('voidedBy', 'name');
 
         if (!collection) {
             return res.status(404).json({
@@ -298,7 +298,7 @@ router.get('/customer/:customerId', async (req, res) => {
         }
 
         const collections = await Collection.find({ customer: customerId })
-            .populate('agent', 'name employeeId')
+            .populate('agent', 'name')
             .populate('voidedBy', 'name')
             .sort({ timestamp: -1 });
 
@@ -411,7 +411,7 @@ router.delete('/:id', authorizeRoles('admin', 'supervisor'), async (req, res) =>
             await customer.save();
         }
 
-        await collection.populate('voidedBy', 'name employeeId');
+        await collection.populate('voidedBy', 'name');
 
         res.json({
             success: true,
