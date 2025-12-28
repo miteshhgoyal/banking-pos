@@ -18,9 +18,7 @@ function NavigationContent() {
     }, [navigationState]);
 
     useEffect(() => {
-        if (!isNavigationReady || loading) {
-            return;
-        }
+        if (!isNavigationReady || loading) return;
 
         const inAuthGroup = segments[0] === '(auth)';
 
@@ -33,7 +31,7 @@ function NavigationContent() {
 
     if (!isNavigationReady || loading) {
         return (
-            <View className="flex-1 bg-[#1F8A70] items-center justify-center">
+            <View className="flex-1 bg-[#1F8A70] items-center justify-center font-primary">
                 <ActivityIndicator size="large" color="#FFFFFF" />
                 <Text className="text-white mt-4 text-base font-semibold">
                     {loading ? 'Loading...' : 'Initializing...'}
@@ -43,31 +41,31 @@ function NavigationContent() {
     }
 
     return (
-        <>
+        <View className="flex-1 font-primary">
             <StatusBar barStyle="dark-content" backgroundColor="#1F8A70" />
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen
                     name="(auth)"
                     options={{
                         headerShown: false,
-                        animation: 'fade'
+                        animation: 'fade',
                     }}
                 />
                 <Stack.Screen
                     name="(tabs)"
                     options={{
                         headerShown: false,
-                        animation: 'fade'
+                        animation: 'fade',
                     }}
                 />
                 <Stack.Screen
                     name="index"
                     options={{
-                        headerShown: false
+                        headerShown: false,
                     }}
                 />
             </Stack>
-        </>
+        </View>
     );
 }
 

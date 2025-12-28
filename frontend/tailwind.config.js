@@ -5,9 +5,9 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                'primary': ['System'],
+                primary: ['Satoshi', 'System'], // used by font-primary
             },
         },
     },
     plugins: [],
-}
+};
