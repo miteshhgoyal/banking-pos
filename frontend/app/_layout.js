@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Stack, useSegments, useRouter, useRootNavigationState } from 'expo-router';
 import { StatusBar, View, ActivityIndicator, Text } from 'react-native';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import './globals.css';
+
+// Keep splash screen visible
+SplashScreen.preventAutoHideAsync();
 
 function NavigationContent() {
     const { isAuthenticated, loading } = useAuth();
@@ -11,11 +16,23 @@ function NavigationContent() {
     const navigationState = useRootNavigationState();
     const [isNavigationReady, setIsNavigationReady] = useState(false);
 
+    // LOAD FONT - This is REQUIRED
+    const [fontsLoaded] = useFonts({
+        'Satoshi': require('../assets/satoshi.ttf'),
+    });
+
     useEffect(() => {
         if (navigationState?.key) {
             setIsNavigationReady(true);
         }
     }, [navigationState]);
+
+    // Hide splash when fonts load
+    useEffect(() => {
+        if (fontsLoaded) {
+            SplashScreen.hideAsync();
+        }
+    }, [fontsLoaded]);
 
     useEffect(() => {
         if (!isNavigationReady || loading) return;
@@ -29,7 +46,8 @@ function NavigationContent() {
         }
     }, [isAuthenticated, segments, isNavigationReady, loading]);
 
-    if (!isNavigationReady || loading) {
+    // Wait for fonts
+    if (!isNavigationReady || loading || !fontsLoaded) {
         return (
             <View className="flex-1 bg-[#1F8A70] items-center justify-center font-primary">
                 <ActivityIndicator size="large" color="#FFFFFF" />

@@ -87,48 +87,42 @@ export default function TabLayout() {
                 name="payment"
                 options={{
                     href: null,
-                    headerShown: false,
-                    tabBarButton: () => null
+                    headerShown: false
                 }}
             />
             <Tabs.Screen
                 name="receipt"
                 options={{
                     href: null,
-                    headerShown: false,
-                    tabBarButton: () => null
+                    headerShown: false
                 }}
             />
             <Tabs.Screen
                 name="add-customer"
                 options={{
                     href: null,
-                    headerShown: false,
-                    tabBarButton: () => null
+                    headerShown: false
                 }}
             />
             <Tabs.Screen
                 name="customer-details"
                 options={{
                     href: null,
-                    headerShown: false,
-                    tabBarButton: () => null
+                    headerShown: false
                 }}
             />
             <Tabs.Screen
                 name="edit-customer"
                 options={{
                     href: null,
-                    headerShown: false,
-                    tabBarButton: () => null
+                    headerShown: false
                 }}
             />
             <Tabs.Screen
                 name="customer-transactions"
                 options={{
                     href: null,
-                    headerShown: false,
-                    tabBarButton: () => null
+                    headerShown: false
                 }}
             />
         </Tabs>
