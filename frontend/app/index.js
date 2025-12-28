@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import './globals.css';
 
 function Index() {
     const { isAuthenticated, loading } = useAuth();
@@ -20,12 +21,7 @@ function Index() {
     // Show loading while checking auth state
     if (loading) {
         return (
-            <View style={{
-                flex: 1,
-                backgroundColor: '#1F8A70',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
+            <View className="flex-1 bg-[#1F8A70] items-center justify-center">
                 <ActivityIndicator size="large" color="#FFFFFF" />
             </View>
         );

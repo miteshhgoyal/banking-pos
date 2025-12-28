@@ -9,6 +9,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    Keyboard
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -57,65 +58,39 @@ export default function LoginScreen() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['top', 'bottom']}>
+        <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}
+                className="flex-1"
             >
                 <ScrollView
-                    contentContainerStyle={{ flexGrow: 1, padding: 24 }}
+                    contentContainerClassName="flex-grow p-6"
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
+                    onScrollBeginDrag={Keyboard.dismiss}
                 >
                     {/* Logo/Title */}
-                    <View style={{ alignItems: 'center', marginTop: 60, marginBottom: 40 }}>
-                        <View style={{
-                            width: 80,
-                            height: 80,
-                            borderRadius: 40,
-                            backgroundColor: '#1F8A70',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 24,
-                            shadowColor: '#1F8A70',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: 0.2,
-                            shadowRadius: 8,
-                            elevation: 8
-                        }}>
-                            <Ionicons name="wallet" size={40} color="#fff" />
+                    <View className="items-center mt-16 mb-10">
+                        <View className="w-20 h-20 rounded-full bg-[#1F8A70] items-center justify-center mb-6 shadow-2xl">
+                            <Ionicons name="wallet" size={40} color="#FFFFFF" />
                         </View>
-                        <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#1F2937', marginBottom: 8 }}>
+                        <Text className="text-3xl font-bold text-gray-900 mb-2">
                             Banking POS
                         </Text>
-                        <Text style={{ fontSize: 16, color: '#6B7280' }}>
+                        <Text className="text-base text-gray-500 text-center">
                             Loan Collection & EMI Management
                         </Text>
                     </View>
 
                     {/* Email Input */}
-                    <View style={{ marginBottom: 20 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                    <View className="mb-5">
+                        <Text className="text-sm font-semibold text-gray-700 mb-2">
                             Email Address
                         </Text>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#F9FAFB',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#E5E7EB',
-                            paddingHorizontal: 16,
-                        }}>
+                        <View className="flex-row items-center bg-gray-50 rounded-xl border border-gray-200 px-4">
                             <Ionicons name="mail-outline" size={20} color="#6B7280" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    height: 56,
-                                    marginLeft: 12,
-                                    color: '#1F2937',
-                                    fontSize: 16
-                                }}
+                                className="flex-1 h-14 ml-3 text-gray-900 text-base"
                                 placeholder="Enter your email"
                                 placeholderTextColor="#9CA3AF"
                                 value={email}
@@ -129,28 +104,14 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Password Input */}
-                    <View style={{ marginBottom: 24 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                    <View className="mb-6">
+                        <Text className="text-sm font-semibold text-gray-700 mb-2">
                             Password
                         </Text>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#F9FAFB',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#E5E7EB',
-                            paddingHorizontal: 16,
-                        }}>
+                        <View className="flex-row items-center bg-gray-50 rounded-xl border border-gray-200 px-4">
                             <Ionicons name="lock-closed-outline" size={20} color="#6B7280" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    height: 56,
-                                    marginLeft: 12,
-                                    color: '#1F2937',
-                                    fontSize: 16
-                                }}
+                                className="flex-1 h-14 ml-3 text-gray-900 text-base"
                                 placeholder="Enter your password"
                                 placeholderTextColor="#9CA3AF"
                                 value={password}
@@ -158,7 +119,10 @@ export default function LoginScreen() {
                                 secureTextEntry={!showPassword}
                                 editable={!loading}
                             />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                            <TouchableOpacity
+                                onPress={() => setShowPassword(!showPassword)}
+                                disabled={loading}
+                            >
                                 <Ionicons
                                     name={showPassword ? "eye-outline" : "eye-off-outline"}
                                     size={20}
@@ -170,39 +134,30 @@ export default function LoginScreen() {
 
                     {/* Login Button */}
                     <TouchableOpacity
-                        style={{
-                            backgroundColor: '#1F8A70',
-                            borderRadius: 12,
-                            height: 56,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 20,
-                            shadowColor: '#1F8A70',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: 0.3,
-                            shadowRadius: 8,
-                            elevation: 8
-                        }}
+                        className="bg-[#1F8A70] rounded-xl h-14 items-center justify-center mb-5 shadow-2xl"
                         onPress={handleLogin}
                         disabled={loading}
                         activeOpacity={0.8}
                     >
                         {loading ? (
-                            <ActivityIndicator color="#fff" />
+                            <ActivityIndicator color="#FFFFFF" />
                         ) : (
-                            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
+                            <Text className="text-white text-lg font-bold">
                                 Sign In
                             </Text>
                         )}
                     </TouchableOpacity>
 
                     {/* Signup Link */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                        <Text style={{ color: '#6B7280', fontSize: 16 }}>
+                    <View className="flex-row justify-center items-center">
+                        <Text className="text-gray-500 text-base">
                             Don't have an account?{' '}
                         </Text>
-                        <TouchableOpacity onPress={() => router.push('/(auth)/signup')} disabled={loading}>
-                            <Text style={{ color: '#1F8A70', fontSize: 16, fontWeight: 'bold' }}>
+                        <TouchableOpacity
+                            onPress={() => router.push('/(auth)/signup')}
+                            disabled={loading}
+                        >
+                            <Text className="text-[#1F8A70] text-base font-bold">
                                 Sign Up
                             </Text>
                         </TouchableOpacity>

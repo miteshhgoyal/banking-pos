@@ -33,19 +33,9 @@ function NavigationContent() {
 
     if (!isNavigationReady || loading) {
         return (
-            <View style={{
-                flex: 1,
-                backgroundColor: '#1F8A70',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
+            <View className="flex-1 bg-[#1F8A70] items-center justify-center">
                 <ActivityIndicator size="large" color="#FFFFFF" />
-                <Text style={{
-                    color: '#FFFFFF',
-                    marginTop: 16,
-                    fontSize: 16,
-                    fontWeight: '600'
-                }}>
+                <Text className="text-white mt-4 text-base font-semibold">
                     {loading ? 'Loading...' : 'Initializing...'}
                 </Text>
             </View>
@@ -54,7 +44,7 @@ function NavigationContent() {
 
     return (
         <>
-            <StatusBar barStyle="light-content" backgroundColor="#1F8A70" />
+            <StatusBar barStyle="dark-content" backgroundColor="#1F8A70" />
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen
                     name="(auth)"

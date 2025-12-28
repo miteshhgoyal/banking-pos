@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -6,11 +6,13 @@ import {
     FlatList,
     TouchableOpacity,
     ActivityIndicator,
-    RefreshControl
+    RefreshControl,
+    Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import api from '@/services/api';
 
 export default function CustomersScreen() {
@@ -22,9 +24,12 @@ export default function CustomersScreen() {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
 
-    useEffect(() => {
-        fetchCustomers();
-    }, [statusFilter]);
+    // Use useFocusEffect to refresh data when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchCustomers();
+        }, [statusFilter, search])
+    );
 
     const fetchCustomers = async () => {
         try {
@@ -54,103 +59,182 @@ export default function CustomersScreen() {
         fetchCustomers();
     };
 
-    const getStatusColor = (status) => {
+    const getStatusBg = (status) => {
         switch (status) {
-            case 'active': return '#10B981';
-            case 'closed': return '#6B7280';
-            case 'defaulter': return '#F59E0B';
-            case 'npa': return '#EF4444';
-            default: return '#6B7280';
+            case 'active': return 'bg-green-50';
+            case 'closed': return 'bg-gray-100';
+            case 'defaulter': return 'bg-amber-50';
+            case 'npa': return 'bg-red-50';
+            default: return 'bg-gray-100';
+        }
+    };
+
+    const getStatusText = (status) => {
+        switch (status) {
+            case 'active': return 'text-green-600';
+            case 'closed': return 'text-gray-600';
+            case 'defaulter': return 'text-amber-600';
+            case 'npa': return 'text-red-600';
+            default: return 'text-gray-600';
+        }
+    };
+
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'active': return 'checkmark-circle';
+            case 'closed': return 'close-circle';
+            case 'defaulter': return 'warning';
+            case 'npa': return 'alert-circle';
+            default: return 'ellipse';
         }
     };
 
     const renderCustomer = ({ item }) => (
         <TouchableOpacity
-            style={{ backgroundColor: '#FFFFFF', marginBottom: 12, borderRadius: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
-            onPress={() => router.push({ pathname: '/(tabs)/customer-details', params: { customerId: item._id } })}
+            className="bg-white mb-3 rounded-2xl p-5 shadow-lg shadow-gray-200/50 border border-gray-100"
+            onPress={() => router.push({
+                pathname: '/(tabs)/customer-details',
+                params: { customerId: item._id }
+            })}
+            activeOpacity={0.7}
         >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1F2937', marginBottom: 4 }}>
+            {/* Header Row */}
+            <View className="flex-row justify-between items-start mb-4">
+                <View className="flex-1 mr-3">
+                    <Text className="text-lg font-bold text-gray-900 mb-1">
                         {item.name}
                     </Text>
-                    <Text style={{ fontSize: 14, color: '#6B7280' }}>
-                        Loan ID: {item.loanId}
-                    </Text>
+                    <View className="flex-row items-center">
+                        <View className="px-2 py-0.5 bg-gray-100 rounded mr-2">
+                            <Text className="text-xs font-medium text-gray-600">
+                                ID: {item.loanId}
+                            </Text>
+                        </View>
+                    </View>
                 </View>
-                <View style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, backgroundColor: getStatusColor(item.status) + '20' }}>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: getStatusColor(item.status), textTransform: 'uppercase' }}>
+                <View className={`px-3 py-1.5 rounded-xl flex-row items-center ${getStatusBg(item.status)}`}>
+                    <Ionicons
+                        name={getStatusIcon(item.status)}
+                        size={14}
+                        color={getStatusText(item.status).includes('green') ? '#059669' :
+                            getStatusText(item.status).includes('amber') ? '#D97706' :
+                                getStatusText(item.status).includes('red') ? '#DC2626' : '#6B7280'}
+                    />
+                    <Text className={`text-xs font-bold uppercase ml-1 ${getStatusText(item.status)}`}>
                         {item.status}
                     </Text>
                 </View>
             </View>
 
-            <View style={{ height: 1, backgroundColor: '#E5E7EB', marginVertical: 12 }} />
-
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <View>
-                    <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 4 }}>Outstanding</Text>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#EF4444' }}>
-                        ₹{item.outstandingAmount?.toLocaleString()}
-                    </Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 4 }}>EMI Amount</Text>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1F2937' }}>
-                        ₹{item.loanDetails?.emiAmount?.toLocaleString()}
-                    </Text>
+            {/* Stats Grid */}
+            <View className="bg-gray-50 rounded-xl p-3 mb-3">
+                <View className="flex-row justify-between">
+                    <View className="flex-1">
+                        <Text className="text-xs text-gray-500 mb-1 font-medium">Outstanding</Text>
+                        <Text className="text-xl font-bold text-red-600">
+                            ₹{item.outstandingAmount?.toLocaleString('en-IN') || '0'}
+                        </Text>
+                    </View>
+                    <View className="w-px bg-gray-200 mx-3" />
+                    <View className="flex-1 items-end">
+                        <Text className="text-xs text-gray-500 mb-1 font-medium">EMI Amount</Text>
+                        <Text className="text-xl font-bold text-gray-900">
+                            ₹{item.loanDetails?.emiAmount?.toLocaleString('en-IN') || '0'}
+                        </Text>
+                    </View>
                 </View>
             </View>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                <Ionicons name="call" size={14} color="#6B7280" />
-                <Text style={{ fontSize: 14, color: '#6B7280', marginLeft: 6 }}>{item.mobile}</Text>
+            {/* Contact Info */}
+            <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                    <View className="w-8 h-8 rounded-full bg-teal-50 items-center justify-center mr-2">
+                        <Ionicons name="call" size={16} color="#1F8A70" />
+                    </View>
+                    <Text className="text-sm text-gray-700 font-medium">{item.mobile}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </View>
         </TouchableOpacity>
     );
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }} edges={['top']}>
-            {/* Header */}
-            <View style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1F2937', marginBottom: 16 }}>
-                    Customers
-                </Text>
+        <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+            {/* Background Watermark */}
+            <Image
+                source={require('@/assets/ph-logo.png')}
+                className="absolute bottom-20 right-8 w-32 h-32 opacity-5"
+                style={{ zIndex: 0 }}
+                resizeMode="contain"
+            />
 
-                {/* Search Bar */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, paddingHorizontal: 16, marginBottom: 12 }}>
+            {/* Modern Header */}
+            <View className="bg-white pt-4 pb-4 px-6 shadow-sm">
+                <View className="flex-row items-center justify-between mb-4">
+                    <View>
+                        <Text className="text-2xl font-bold text-gray-900 tracking-tight">
+                            Customers
+                        </Text>
+                        <Text className="text-sm text-gray-500 mt-0.5">
+                            {customers.length} {customers.length === 1 ? 'customer' : 'customers'}
+                        </Text>
+                    </View>
+                    <View className="w-12 h-12 rounded-full bg-teal-50 items-center justify-center">
+                        <Ionicons name="people" size={24} color="#1F8A70" />
+                    </View>
+                </View>
+
+                {/* Modern Search Bar */}
+                <View className="flex-row items-center bg-gray-50 rounded-2xl px-4 mb-4 border border-gray-200">
                     <Ionicons name="search" size={20} color="#6B7280" />
                     <TextInput
-                        style={{ flex: 1, height: 48, marginLeft: 12, color: '#1F2937', fontSize: 16 }}
-                        placeholder="Search by name, loan ID, mobile..."
+                        className="flex-1 h-12 ml-3 text-gray-900 text-base"
+                        placeholder="Search customers..."
                         placeholderTextColor="#9CA3AF"
                         value={search}
                         onChangeText={setSearch}
                         onSubmitEditing={handleSearch}
                         returnKeyType="search"
                     />
+                    {search.length > 0 && (
+                        <TouchableOpacity onPress={() => {
+                            setSearch('');
+                            setLoading(true);
+                            fetchCustomers();
+                        }}>
+                            <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                        </TouchableOpacity>
+                    )}
                 </View>
 
-                {/* Status Filter */}
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {['', 'active', 'defaulter', 'npa'].map((status) => (
+                {/* Modern Status Filter Chips */}
+                <View className="flex-row flex-wrap -mx-1">
+                    {[
+                        { value: '', label: 'All', icon: 'apps' },
+                        { value: 'active', label: 'Active', icon: 'checkmark-circle' },
+                        { value: 'defaulter', label: 'Defaulter', icon: 'warning' },
+                        { value: 'npa', label: 'NPA', icon: 'alert-circle' }
+                    ].map((filter) => (
                         <TouchableOpacity
-                            key={status}
-                            style={{
-                                paddingHorizontal: 16,
-                                paddingVertical: 8,
-                                borderRadius: 20,
-                                backgroundColor: statusFilter === status ? '#1F8A70' : '#F3F4F6'
+                            key={filter.value}
+                            className={`px-4 py-2.5 rounded-xl mx-1 mb-2 flex-row items-center ${statusFilter === filter.value
+                                ? 'bg-teal-600 shadow-lg shadow-teal-600/30'
+                                : 'bg-gray-100'
+                                }`}
+                            onPress={() => {
+                                setStatusFilter(filter.value);
+                                setLoading(true);
                             }}
-                            onPress={() => setStatusFilter(status)}
+                            activeOpacity={0.7}
                         >
-                            <Text style={{
-                                fontSize: 14,
-                                fontWeight: '600',
-                                color: statusFilter === status ? '#FFFFFF' : '#6B7280',
-                                textTransform: 'capitalize'
-                            }}>
-                                {status || 'All'}
+                            <Ionicons
+                                name={filter.icon}
+                                size={16}
+                                color={statusFilter === filter.value ? '#FFFFFF' : '#6B7280'}
+                            />
+                            <Text className={`text-sm font-semibold ml-1.5 ${statusFilter === filter.value ? 'text-white' : 'text-gray-700'
+                                }`}>
+                                {filter.label}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -159,8 +243,9 @@ export default function CustomersScreen() {
 
             {/* Customer List */}
             {loading ? (
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                <View className="flex-1 items-center justify-center">
                     <ActivityIndicator size="large" color="#1F8A70" />
+                    <Text className="mt-4 text-gray-600 text-base font-medium">Loading customers...</Text>
                 </View>
             ) : (
                 <FlatList
@@ -169,36 +254,37 @@ export default function CustomersScreen() {
                     keyExtractor={(item) => item._id}
                     contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1F8A70']} />
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={['#1F8A70']}
+                            tintColor="#1F8A70"
+                        />
                     }
                     ListEmptyComponent={
-                        <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 40 }}>
-                            <Ionicons name="people-outline" size={64} color="#D1D5DB" />
-                            <Text style={{ fontSize: 16, color: '#6B7280', marginTop: 16 }}>No customers found</Text>
+                        <View className="items-center justify-center py-16">
+                            <View className="w-24 h-24 rounded-full bg-gray-100 items-center justify-center mb-4">
+                                <Ionicons name="people-outline" size={48} color="#D1D5DB" />
+                            </View>
+                            <Text className="text-lg font-bold text-gray-900 mb-2">
+                                No customers found
+                            </Text>
+                            <Text className="text-sm text-gray-500 text-center px-8">
+                                {search
+                                    ? 'Try adjusting your search or filters'
+                                    : 'Add your first customer to get started'}
+                            </Text>
                         </View>
                     }
+                    showsVerticalScrollIndicator={false}
                 />
             )}
 
             {/* Floating Add Button */}
             <TouchableOpacity
-                style={{
-                    position: 'absolute',
-                    right: 20,
-                    bottom: 20,
-                    width: 60,
-                    height: 60,
-                    borderRadius: 30,
-                    backgroundColor: '#1F8A70',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 8,
-                    elevation: 8
-                }}
+                className="absolute right-6 bottom-6 w-16 h-16 rounded-2xl bg-teal-600 items-center justify-center shadow-2xl shadow-teal-600/50"
                 onPress={() => router.push('/(tabs)/add-customer')}
+                activeOpacity={0.8}
             >
                 <Ionicons name="add" size={32} color="#FFFFFF" />
             </TouchableOpacity>

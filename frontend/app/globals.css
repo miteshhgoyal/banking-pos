@@ -166,3 +166,12 @@
         color: #64748b;
     }
 }
+
+@font-face {
+    font-family: satoshi;
+    src: url("../assets/satoshi.ttf");
+}
+
+* {
+    font-family: satoshi !important;
+}

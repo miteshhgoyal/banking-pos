@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -9,6 +9,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +30,23 @@ export default function SignupScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            () => setKeyboardVisible(true)
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => setKeyboardVisible(false)
+        );
+
+        return () => {
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
+        };
+    }, []);
 
     const handleSignup = async () => {
         // Validation
@@ -85,97 +103,69 @@ export default function SignupScreen() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['top', 'bottom']}>
+        <SafeAreaView className="flex-1 bg-white" edges={['top']}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                className="flex-1"
+                keyboardVerticalOffset={0}
             >
                 <ScrollView
-                    contentContainerStyle={{ flexGrow: 1, padding: 24 }}
+                    contentContainerStyle={{
+                        flexGrow: 1,
+                        padding: 24,
+                        paddingBottom: keyboardVisible ? 350 : 24
+                    }}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
+                    scrollEnabled={true}
                 >
                     {/* Back Button */}
                     <TouchableOpacity
-                        style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 20,
-                            backgroundColor: '#F3F4F6',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 20
-                        }}
+                        className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mb-5"
                         onPress={() => router.back()}
+                        disabled={loading}
                     >
                         <Ionicons name="arrow-back" size={24} color="#1F2937" />
                     </TouchableOpacity>
 
                     {/* Title */}
-                    <View style={{ marginBottom: 32 }}>
-                        <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#1F2937', marginBottom: 8 }}>
+                    <View className="mb-8">
+                        <Text className="text-3xl font-bold text-gray-900 mb-2">
                             Create Account
                         </Text>
-                        <Text style={{ fontSize: 16, color: '#6B7280' }}>
+                        <Text className="text-base text-gray-500">
                             Register as a field agent
                         </Text>
                     </View>
 
                     {/* Name Input */}
-                    <View style={{ marginBottom: 16 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                    <View className="mb-4">
+                        <Text className="text-sm font-semibold text-gray-700 mb-2">
                             Full Name
                         </Text>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#F9FAFB',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#E5E7EB',
-                            paddingHorizontal: 16,
-                        }}>
+                        <View className="flex-row items-center bg-gray-50 rounded-xl border border-gray-200 px-4">
                             <Ionicons name="person-outline" size={20} color="#6B7280" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    height: 56,
-                                    marginLeft: 12,
-                                    color: '#1F2937',
-                                    fontSize: 16
-                                }}
+                                className="flex-1 h-14 ml-3 text-gray-900 text-base"
                                 placeholder="Enter your full name"
                                 placeholderTextColor="#9CA3AF"
                                 value={name}
                                 onChangeText={setName}
                                 editable={!loading}
+                                returnKeyType="next"
                             />
                         </View>
                     </View>
 
                     {/* Email Input */}
-                    <View style={{ marginBottom: 16 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                    <View className="mb-4">
+                        <Text className="text-sm font-semibold text-gray-700 mb-2">
                             Email Address
                         </Text>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#F9FAFB',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#E5E7EB',
-                            paddingHorizontal: 16,
-                        }}>
+                        <View className="flex-row items-center bg-gray-50 rounded-xl border border-gray-200 px-4">
                             <Ionicons name="mail-outline" size={20} color="#6B7280" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    height: 56,
-                                    marginLeft: 12,
-                                    color: '#1F2937',
-                                    fontSize: 16
-                                }}
+                                className="flex-1 h-14 ml-3 text-gray-900 text-base"
                                 placeholder="Enter your email"
                                 placeholderTextColor="#9CA3AF"
                                 value={email}
@@ -184,33 +174,20 @@ export default function SignupScreen() {
                                 autoCapitalize="none"
                                 autoCorrect={false}
                                 editable={!loading}
+                                returnKeyType="next"
                             />
                         </View>
                     </View>
 
                     {/* Mobile Input */}
-                    <View style={{ marginBottom: 16 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                    <View className="mb-4">
+                        <Text className="text-sm font-semibold text-gray-700 mb-2">
                             Mobile Number
                         </Text>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#F9FAFB',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#E5E7EB',
-                            paddingHorizontal: 16,
-                        }}>
+                        <View className="flex-row items-center bg-gray-50 rounded-xl border border-gray-200 px-4">
                             <Ionicons name="call-outline" size={20} color="#6B7280" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    height: 56,
-                                    marginLeft: 12,
-                                    color: '#1F2937',
-                                    fontSize: 16
-                                }}
+                                className="flex-1 h-14 ml-3 text-gray-900 text-base"
                                 placeholder="Enter 10-digit mobile number"
                                 placeholderTextColor="#9CA3AF"
                                 value={mobile}
@@ -218,73 +195,51 @@ export default function SignupScreen() {
                                 keyboardType="phone-pad"
                                 maxLength={10}
                                 editable={!loading}
+                                returnKeyType="next"
                             />
                         </View>
                     </View>
 
                     {/* Branch Input */}
-                    <View style={{ marginBottom: 16 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                    <View className="mb-4">
+                        <Text className="text-sm font-semibold text-gray-700 mb-2">
                             Branch
                         </Text>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#F9FAFB',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#E5E7EB',
-                            paddingHorizontal: 16,
-                        }}>
+                        <View className="flex-row items-center bg-gray-50 rounded-xl border border-gray-200 px-4">
                             <Ionicons name="business-outline" size={20} color="#6B7280" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    height: 56,
-                                    marginLeft: 12,
-                                    color: '#1F2937',
-                                    fontSize: 16
-                                }}
+                                className="flex-1 h-14 ml-3 text-gray-900 text-base"
                                 placeholder="Enter your branch name"
                                 placeholderTextColor="#9CA3AF"
                                 value={branch}
                                 onChangeText={setBranch}
                                 editable={!loading}
+                                returnKeyType="next"
                             />
                         </View>
                     </View>
 
                     {/* Password Input */}
-                    <View style={{ marginBottom: 16 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                    <View className="mb-4">
+                        <Text className="text-sm font-semibold text-gray-700 mb-2">
                             Password
                         </Text>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#F9FAFB',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#E5E7EB',
-                            paddingHorizontal: 16,
-                        }}>
+                        <View className="flex-row items-center bg-gray-50 rounded-xl border border-gray-200 px-4">
                             <Ionicons name="lock-closed-outline" size={20} color="#6B7280" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    height: 56,
-                                    marginLeft: 12,
-                                    color: '#1F2937',
-                                    fontSize: 16
-                                }}
+                                className="flex-1 h-14 ml-3 text-gray-900 text-base"
                                 placeholder="Create a password"
                                 placeholderTextColor="#9CA3AF"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry={!showPassword}
                                 editable={!loading}
+                                returnKeyType="next"
                             />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                            <TouchableOpacity
+                                onPress={() => setShowPassword(!showPassword)}
+                                disabled={loading}
+                            >
                                 <Ionicons
                                     name={showPassword ? "eye-outline" : "eye-off-outline"}
                                     size={20}
@@ -295,36 +250,27 @@ export default function SignupScreen() {
                     </View>
 
                     {/* Confirm Password Input */}
-                    <View style={{ marginBottom: 24 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                    <View className="mb-6">
+                        <Text className="text-sm font-semibold text-gray-700 mb-2">
                             Confirm Password
                         </Text>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#F9FAFB',
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#E5E7EB',
-                            paddingHorizontal: 16,
-                        }}>
+                        <View className="flex-row items-center bg-gray-50 rounded-xl border border-gray-200 px-4">
                             <Ionicons name="lock-closed-outline" size={20} color="#6B7280" />
                             <TextInput
-                                style={{
-                                    flex: 1,
-                                    height: 56,
-                                    marginLeft: 12,
-                                    color: '#1F2937',
-                                    fontSize: 16
-                                }}
+                                className="flex-1 h-14 ml-3 text-gray-900 text-base"
                                 placeholder="Confirm your password"
                                 placeholderTextColor="#9CA3AF"
                                 value={confirmPassword}
                                 onChangeText={setConfirmPassword}
                                 secureTextEntry={!showConfirmPassword}
                                 editable={!loading}
+                                returnKeyType="done"
+                                onSubmitEditing={handleSignup}
                             />
-                            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                            <TouchableOpacity
+                                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                disabled={loading}
+                            >
                                 <Ionicons
                                     name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
                                     size={20}
@@ -336,39 +282,30 @@ export default function SignupScreen() {
 
                     {/* Signup Button */}
                     <TouchableOpacity
-                        style={{
-                            backgroundColor: '#1F8A70',
-                            borderRadius: 12,
-                            height: 56,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 20,
-                            shadowColor: '#1F8A70',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: 0.3,
-                            shadowRadius: 8,
-                            elevation: 8
-                        }}
+                        className="bg-[#1F8A70] rounded-xl h-14 items-center justify-center mb-5 shadow-2xl"
                         onPress={handleSignup}
                         disabled={loading}
                         activeOpacity={0.8}
                     >
                         {loading ? (
-                            <ActivityIndicator color="#fff" />
+                            <ActivityIndicator color="#FFFFFF" />
                         ) : (
-                            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
+                            <Text className="text-white text-lg font-bold">
                                 Create Account
                             </Text>
                         )}
                     </TouchableOpacity>
 
                     {/* Login Link */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-                        <Text style={{ color: '#6B7280', fontSize: 16 }}>
+                    <View className="flex-row justify-center items-center mb-5">
+                        <Text className="text-gray-500 text-base">
                             Already have an account?{' '}
                         </Text>
-                        <TouchableOpacity onPress={() => router.back()} disabled={loading}>
-                            <Text style={{ color: '#1F8A70', fontSize: 16, fontWeight: 'bold' }}>
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            disabled={loading}
+                        >
+                            <Text className="text-[#1F8A70] text-base font-bold">
                                 Sign In
                             </Text>
                         </TouchableOpacity>

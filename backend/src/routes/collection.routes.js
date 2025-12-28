@@ -65,7 +65,7 @@ router.get('/stats/today', async (req, res) => {
             }
         ]);
 
-        // ✅ FIX: Provide default values when no data exists
+        // Provide default values when no data exists
         const defaultStats = {
             totalCollections: 0,
             totalAmount: 0,
@@ -115,7 +115,7 @@ router.get('/customer/:customerId', async (req, res) => {
 
         const collections = await Collection.find({
             customer: customerId,
-            status: { $ne: 'voided' } // ✅ FIX: Exclude voided transactions
+            status: { $ne: 'voided' } // Exclude voided transactions
         })
             .populate('agent', 'name')
             .populate('voidedBy', 'name')
@@ -165,7 +165,7 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // ✅ FIX: Support 'qr' payment mode
+        // Support 'qr' payment mode
         if (!['cash', 'upi', 'qr', 'card'].includes(paymentMode)) {
             return res.status(400).json({
                 success: false,
@@ -329,7 +329,7 @@ router.get('/', async (req, res) => {
             }
         }
 
-        // ✅ FIX: Only show completed collections by default
+        // Only show completed collections by default
         filter.status = { $ne: 'voided' };
 
         const collections = await Collection.find(filter)

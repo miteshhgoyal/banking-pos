@@ -70,287 +70,244 @@ export default function HomeScreen() {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+            <View className="flex-1 bg-gray-50 items-center justify-center">
                 <ActivityIndicator size="large" color="#1F8A70" />
-                <Text style={{ marginTop: 12, color: '#6B7280', fontSize: 14 }}>Loading statistics...</Text>
+                <Text className="mt-4 text-gray-600 text-base font-medium">Loading statistics...</Text>
             </View>
         );
     }
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }} edges={['top']}>
-            {/* Watermark */}
+        <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+            {/* Background Watermark */}
             <Image
                 source={require('@/assets/ph-logo.png')}
-                style={{
-                    position: 'absolute',
-                    bottom: 40,
-                    right: 20,
-                    width: 80,
-                    height: 80,
-                    opacity: 0.1,
-                    zIndex: 0
-                }}
+                className="absolute bottom-20 right-8 w-32 h-32 opacity-5"
+                style={{ zIndex: 0 }}
                 resizeMode="contain"
             />
 
             <ScrollView
+                className="flex-1"
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1F8A70']} />
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#1F8A70']}
+                        tintColor="#1F8A70"
+                    />
                 }
             >
-                {/* Header */}
-                <View style={{
-                    backgroundColor: '#FFFFFF',
-                    paddingHorizontal: 20,
-                    paddingVertical: 24,
-                    borderBottomWidth: 1,
-                    borderBottomColor: '#E5E7EB',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                }}>
-                    <View>
-                        <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 4 }}>Welcome back,</Text>
-                        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1F2937' }}>{user?.name || 'User'}</Text>
+                {/* Modern Header with Gradient Background */}
+                <View className="bg-white pt-4 pb-6 px-6 shadow-sm">
+                    <View className="flex-row items-center justify-between mb-2">
+                        <View className="flex-1">
+                            <Text className="text-sm text-gray-500 font-medium mb-1">Welcome back</Text>
+                            <Text className="text-2xl font-bold text-gray-900 tracking-tight">
+                                {user?.name || 'User'}
+                            </Text>
+                        </View>
+                        <View className="w-14 h-14 rounded-full bg-teal-50 items-center justify-center border-2 border-teal-100">
+                            <Image
+                                source={require('@/assets/ph-logo.png')}
+                                className="w-9 h-9"
+                                resizeMode="contain"
+                            />
+                        </View>
                     </View>
-                    <Image
-                        source={require('@/assets/ph-logo.png')}
-                        style={{ width: 50, height: 50 }}
-                        resizeMode="contain"
-                    />
+
+                    {/* Date Indicator */}
+                    <View className="flex-row items-center mt-2">
+                        <Ionicons name="calendar-outline" size={14} color="#6B7280" />
+                        <Text className="text-xs text-gray-500 ml-1.5 font-medium">
+                            {new Date().toLocaleDateString('en-IN', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            })}
+                        </Text>
+                    </View>
                 </View>
 
-                {/* Error Banner */}
+                {/* Error Banner with Modern Design */}
                 {error && (
-                    <View style={{
-                        margin: 20,
-                        padding: 16,
-                        backgroundColor: '#FEE2E2',
-                        borderRadius: 12,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        borderLeftWidth: 4,
-                        borderLeftColor: '#DC2626'
-                    }}>
-                        <Ionicons name="warning" size={24} color="#DC2626" />
-                        <View style={{ flex: 1, marginLeft: 12 }}>
-                            <Text style={{ color: '#DC2626', fontSize: 14, fontWeight: '600' }}>Failed to load</Text>
-                            <Text style={{ color: '#991B1B', fontSize: 12, marginTop: 2 }}>{error}</Text>
+                    <View className="mx-5 mt-4 p-4 bg-red-50 rounded-2xl flex-row items-start border border-red-200">
+                        <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center">
+                            <Ionicons name="alert-circle" size={22} color="#DC2626" />
                         </View>
-                        <TouchableOpacity onPress={fetchStats}>
-                            <Ionicons name="refresh" size={20} color="#DC2626" />
+                        <View className="flex-1 ml-3">
+                            <Text className="text-red-700 text-sm font-bold">Unable to Load Data</Text>
+                            <Text className="text-red-600 text-xs mt-1 leading-4">{error}</Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={fetchStats}
+                            className="w-9 h-9 rounded-full bg-red-100 items-center justify-center ml-2"
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="refresh" size={18} color="#DC2626" />
                         </TouchableOpacity>
                     </View>
                 )}
 
-                {/* Today's Stats Card */}
-                <View style={{ padding: 20 }}>
-                    <Gradient type="teal" style={{
-                        borderRadius: 16,
-                        padding: 20,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 8,
-                        elevation: 5,
-                        overflow: 'hidden'
-                    }}>
-                        {/* Watermark in Card */}
-                        <Image
-                            source={require('@/assets/ph-logo.png')}
-                            style={{
-                                position: 'absolute',
-                                top: -20,
-                                right: -20,
-                                width: 150,
-                                height: 150,
-                                opacity: 0.08,
-                                transform: [{ rotate: '-15deg' }]
-                            }}
-                            resizeMode="contain"
-                        />
+                {/* Modern Stats Card with Enhanced Design */}
+                <View className="mx-5 mt-5 rounded-3xl overflow-hidden shadow-2xl shadow-teal-600/20">
+                    <Gradient type="teal">
+                        <View className="p-6">
+                            {/* Card Watermark */}
+                            <Image
+                                source={require('@/assets/ph-logo.png')}
+                                className="absolute -top-8 -right-8 w-40 h-40 opacity-10"
+                                style={{ transform: [{ rotate: '-12deg' }] }}
+                                resizeMode="contain"
+                            />
 
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                            <Ionicons name="calendar" size={24} color="#FFFFFF" />
-                            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginLeft: 8 }}>
-                                Today's Collection
-                            </Text>
-                        </View>
+                            {/* Card Header */}
+                            <View className="flex-row items-center justify-between mb-5">
+                                <View className="flex-row items-center">
+                                    <View className="w-11 h-11 rounded-xl bg-white/20 items-center justify-center mr-3">
+                                        <Ionicons name="stats-chart" size={24} color="#FFFFFF" />
+                                    </View>
+                                    <View>
+                                        <Text className="text-base font-bold text-white">Today's Collection</Text>
+                                        <Text className="text-xs text-white/70 mt-0.5">Real-time overview</Text>
+                                    </View>
+                                </View>
+                                <View className="px-3 py-1.5 bg-white/20 rounded-full">
+                                    <Text className="text-xs font-semibold text-white">LIVE</Text>
+                                </View>
+                            </View>
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-                            <View>
-                                <Text style={{ fontSize: 14, color: '#E0F2F1', marginBottom: 4 }}>Total Amount</Text>
-                                <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#FFFFFF' }}>
-                                    ₹{(stats?.totalAmount || 0).toLocaleString('en-IN')}
-                                </Text>
+                            {/* Main Stats - Bento Grid Style */}
+                            <View className="bg-white/10 rounded-2xl p-4 mb-4 backdrop-blur-sm">
+                                <View className="flex-row justify-between items-center">
+                                    <View className="flex-1">
+                                        <Text className="text-xs text-white/80 mb-1.5 font-medium tracking-wide">TOTAL AMOUNT</Text>
+                                        <Text className="text-4xl font-black text-white tracking-tight">
+                                            ₹{(stats?.totalAmount || 0).toLocaleString('en-IN')}
+                                        </Text>
+                                    </View>
+                                    <View className="w-px h-14 bg-white/20 mx-4" />
+                                    <View className="items-end flex-1">
+                                        <Text className="text-xs text-white/80 mb-1.5 font-medium tracking-wide">TRANSACTIONS</Text>
+                                        <Text className="text-4xl font-black text-white tracking-tight">
+                                            {stats?.totalCollections || 0}
+                                        </Text>
+                                    </View>
+                                </View>
                             </View>
-                            <View style={{ alignItems: 'flex-end' }}>
-                                <Text style={{ fontSize: 14, color: '#E0F2F1', marginBottom: 4 }}>Transactions</Text>
-                                <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#FFFFFF' }}>
-                                    {stats?.totalCollections || 0}
-                                </Text>
-                            </View>
-                        </View>
 
-                        <View style={{ height: 1, backgroundColor: '#FFFFFF40', marginVertical: 12 }} />
+                            {/* Payment Method Breakdown */}
+                            <View className="flex-row justify-between">
+                                <View className="flex-1 bg-white/10 rounded-xl p-3 mr-2">
+                                    <View className="flex-row items-center mb-2">
+                                        <Ionicons name="cash-outline" size={18} color="#FFFFFF" />
+                                        <Text className="text-xs text-white/80 ml-1.5 font-medium">Cash</Text>
+                                    </View>
+                                    <Text className="text-lg font-bold text-white">
+                                        ₹{(stats?.cashAmount || 0).toLocaleString('en-IN')}
+                                    </Text>
+                                </View>
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={{ fontSize: 12, color: '#E0F2F1', marginBottom: 4 }}>Cash</Text>
-                                <Text style={{ fontSize: 16, fontWeight: '600', color: '#FFFFFF' }}>
-                                    ₹{(stats?.cashAmount || 0).toLocaleString('en-IN')}
-                                </Text>
-                            </View>
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={{ fontSize: 12, color: '#E0F2F1', marginBottom: 4 }}>UPI/QR</Text>
-                                <Text style={{ fontSize: 16, fontWeight: '600', color: '#FFFFFF' }}>
-                                    ₹{(stats?.upiAmount || 0).toLocaleString('en-IN')}
-                                </Text>
-                            </View>
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={{ fontSize: 12, color: '#E0F2F1', marginBottom: 4 }}>Card</Text>
-                                <Text style={{ fontSize: 16, fontWeight: '600', color: '#FFFFFF' }}>
-                                    ₹{(stats?.cardAmount || 0).toLocaleString('en-IN')}
-                                </Text>
+                                <View className="flex-1 bg-white/10 rounded-xl p-3 mx-1">
+                                    <View className="flex-row items-center mb-2">
+                                        <Ionicons name="qr-code-outline" size={18} color="#FFFFFF" />
+                                        <Text className="text-xs text-white/80 ml-1.5 font-medium">UPI</Text>
+                                    </View>
+                                    <Text className="text-lg font-bold text-white">
+                                        ₹{(stats?.upiAmount || 0).toLocaleString('en-IN')}
+                                    </Text>
+                                </View>
+
+                                <View className="flex-1 bg-white/10 rounded-xl p-3 ml-2">
+                                    <View className="flex-row items-center mb-2">
+                                        <Ionicons name="card-outline" size={18} color="#FFFFFF" />
+                                        <Text className="text-xs text-white/80 ml-1.5 font-medium">Card</Text>
+                                    </View>
+                                    <Text className="text-lg font-bold text-white">
+                                        ₹{(stats?.cardAmount || 0).toLocaleString('en-IN')}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
                     </Gradient>
                 </View>
 
-                {/* Quick Actions */}
-                <View style={{ paddingHorizontal: 20, paddingBottom: 100 }}>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1F2937', marginBottom: 16 }}>
-                        Quick Actions
-                    </Text>
+                {/* Quick Actions with Modern Grid */}
+                <View className="px-5 pt-6 pb-8">
+                    <View className="flex-row items-center justify-between mb-4">
+                        <Text className="text-xl font-bold text-gray-900">Quick Actions</Text>
+                        <View className="px-2.5 py-1 bg-teal-50 rounded-lg">
+                            <Text className="text-xs font-semibold text-teal-700">4 Options</Text>
+                        </View>
+                    </View>
 
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                        <TouchableOpacity
-                            style={{
-                                flex: 1,
-                                minWidth: '47%',
-                                backgroundColor: '#FFFFFF',
-                                borderRadius: 12,
-                                padding: 16,
-                                alignItems: 'center',
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.05,
-                                shadowRadius: 4,
-                                elevation: 2
-                            }}
-                            onPress={() => router.push('/(tabs)/customers')}
-                            activeOpacity={0.7}
-                        >
-                            <View style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: 24,
-                                backgroundColor: '#E8F5E9',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: 8
-                            }}>
-                                <Ionicons name="people" size={24} color="#1F8A70" />
-                            </View>
-                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1F2937' }}>Customers</Text>
-                        </TouchableOpacity>
+                    <View className="flex-row flex-wrap -mx-1.5">
+                        {/* Customers */}
+                        <View className="w-1/2 px-1.5 mb-3">
+                            <TouchableOpacity
+                                className="bg-white rounded-2xl p-5 shadow-lg shadow-gray-200/50 border border-gray-100"
+                                onPress={() => router.push('/(tabs)/customers')}
+                                activeOpacity={0.7}
+                            >
+                                <View className="w-14 h-14 rounded-2xl bg-teal-50 items-center justify-center mb-3 shadow-sm">
+                                    <Ionicons name="people" size={28} color="#1F8A70" />
+                                </View>
+                                <Text className="text-base font-bold text-gray-900 mb-0.5">Customers</Text>
+                                <Text className="text-xs text-gray-500">Manage contacts</Text>
+                            </TouchableOpacity>
+                        </View>
 
-                        <TouchableOpacity
-                            style={{
-                                flex: 1,
-                                minWidth: '47%',
-                                backgroundColor: '#FFFFFF',
-                                borderRadius: 12,
-                                padding: 16,
-                                alignItems: 'center',
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.05,
-                                shadowRadius: 4,
-                                elevation: 2
-                            }}
-                            onPress={() => router.push('/(tabs)/history')}
-                            activeOpacity={0.7}
-                        >
-                            <View style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: 24,
-                                backgroundColor: '#E3F2FD',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: 8
-                            }}>
-                                <Ionicons name="receipt" size={24} color="#2196F3" />
-                            </View>
-                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1F2937' }}>History</Text>
-                        </TouchableOpacity>
+                        {/* History */}
+                        <View className="w-1/2 px-1.5 mb-3">
+                            <TouchableOpacity
+                                className="bg-white rounded-2xl p-5 shadow-lg shadow-gray-200/50 border border-gray-100"
+                                onPress={() => router.push('/(tabs)/history')}
+                                activeOpacity={0.7}
+                            >
+                                <View className="w-14 h-14 rounded-2xl bg-blue-50 items-center justify-center mb-3 shadow-sm">
+                                    <Ionicons name="receipt" size={28} color="#2196F3" />
+                                </View>
+                                <Text className="text-base font-bold text-gray-900 mb-0.5">History</Text>
+                                <Text className="text-xs text-gray-500">View records</Text>
+                            </TouchableOpacity>
+                        </View>
 
-                        <TouchableOpacity
-                            style={{
-                                flex: 1,
-                                minWidth: '47%',
-                                backgroundColor: '#FFFFFF',
-                                borderRadius: 12,
-                                padding: 16,
-                                alignItems: 'center',
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.05,
-                                shadowRadius: 4,
-                                elevation: 2
-                            }}
-                            onPress={() => router.push('/(tabs)/profile')}
-                            activeOpacity={0.7}
-                        >
-                            <View style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: 24,
-                                backgroundColor: '#F3E5F5',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: 8
-                            }}>
-                                <Ionicons name="person" size={24} color="#9C27B0" />
-                            </View>
-                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1F2937' }}>Profile</Text>
-                        </TouchableOpacity>
+                        {/* Profile */}
+                        <View className="w-1/2 px-1.5 mb-3">
+                            <TouchableOpacity
+                                className="bg-white rounded-2xl p-5 shadow-lg shadow-gray-200/50 border border-gray-100"
+                                onPress={() => router.push('/(tabs)/profile')}
+                                activeOpacity={0.7}
+                            >
+                                <View className="w-14 h-14 rounded-2xl bg-purple-50 items-center justify-center mb-3 shadow-sm">
+                                    <Ionicons name="person" size={28} color="#9C27B0" />
+                                </View>
+                                <Text className="text-base font-bold text-gray-900 mb-0.5">Profile</Text>
+                                <Text className="text-xs text-gray-500">Account settings</Text>
+                            </TouchableOpacity>
+                        </View>
 
-                        <TouchableOpacity
-                            style={{
-                                flex: 1,
-                                minWidth: '47%',
-                                backgroundColor: '#FFFFFF',
-                                borderRadius: 12,
-                                padding: 16,
-                                alignItems: 'center',
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.05,
-                                shadowRadius: 4,
-                                elevation: 2
-                            }}
-                            onPress={onRefresh}
-                            activeOpacity={0.7}
-                        >
-                            <View style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: 24,
-                                backgroundColor: '#FFF3E0',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: 8
-                            }}>
-                                <Ionicons name="refresh" size={24} color="#FF9800" />
-                            </View>
-                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1F2937' }}>Refresh</Text>
-                        </TouchableOpacity>
+                        {/* Refresh */}
+                        <View className="w-1/2 px-1.5 mb-3">
+                            <TouchableOpacity
+                                className="bg-white rounded-2xl p-5 shadow-lg shadow-gray-200/50 border border-gray-100"
+                                onPress={onRefresh}
+                                activeOpacity={0.7}
+                            >
+                                <View className="w-14 h-14 rounded-2xl bg-amber-50 items-center justify-center mb-3 shadow-sm">
+                                    <Ionicons name="refresh" size={28} color="#FF9800" />
+                                </View>
+                                <Text className="text-base font-bold text-gray-900 mb-0.5">Refresh</Text>
+                                <Text className="text-xs text-gray-500">Update data</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
+
+                {/* Bottom Spacing */}
+                <View className="h-6" />
             </ScrollView>
         </SafeAreaView>
     );

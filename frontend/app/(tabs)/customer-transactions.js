@@ -65,6 +65,26 @@ export default function CustomerTransactionsScreen() {
         }
     };
 
+    const getPaymentModeBg = (mode) => {
+        switch (mode) {
+            case 'cash': return 'bg-green-100';
+            case 'upi': return 'bg-blue-100';
+            case 'qr': return 'bg-purple-100';
+            case 'card': return 'bg-amber-100';
+            default: return 'bg-gray-100';
+        }
+    };
+
+    const getPaymentModeText = (mode) => {
+        switch (mode) {
+            case 'cash': return 'text-green-600';
+            case 'upi': return 'text-blue-600';
+            case 'qr': return 'text-purple-600';
+            case 'card': return 'text-amber-600';
+            default: return 'text-gray-600';
+        }
+    };
+
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-IN', {
@@ -78,70 +98,57 @@ export default function CustomerTransactionsScreen() {
 
     const renderTransaction = ({ item }) => (
         <TouchableOpacity
-            style={{
-                backgroundColor: '#FFFFFF',
-                marginBottom: 12,
-                borderRadius: 12,
-                padding: 16,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-                elevation: 2,
-                borderLeftWidth: item.status === 'voided' ? 4 : 0,
-                borderLeftColor: '#EF4444',
-                opacity: item.status === 'voided' ? 0.6 : 1
-            }}
+            className={`bg-white mb-3 rounded-xl p-4 shadow-sm border ${item.status === 'voided' ? 'border-l-4 border-l-red-500 opacity-60' : 'border-gray-100'
+                }`}
             onPress={() => router.push({ pathname: '/(tabs)/receipt', params: { collectionId: item._id } })}
+            activeOpacity={0.7}
         >
             {item.status === 'voided' && (
-                <View style={{ backgroundColor: '#FEE2E2', borderRadius: 6, padding: 8, marginBottom: 12 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#DC2626', textAlign: 'center' }}>
-                        ⚠️ VOIDED
+                <View className="bg-red-100 rounded-lg p-2 mb-3">
+                    <Text className="text-xs font-semibold text-red-600 text-center">
+                        VOIDED
                     </Text>
                 </View>
             )}
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#6B7280', marginBottom: 4 }}>
+            <View className="flex-row justify-between items-start mb-3">
+                <View className="flex-1">
+                    <Text className="text-sm font-semibold text-gray-700 mb-1">
                         {item.transactionId}
                     </Text>
-                    <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                    <Text className="text-xs text-gray-400">
                         Agent: {item.agent?.name}
                     </Text>
                 </View>
-                <View style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: getPaymentModeColor(item.paymentMode) + '20',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
-                    <Ionicons name={getPaymentModeIcon(item.paymentMode)} size={20} color={getPaymentModeColor(item.paymentMode)} />
+                <View className={`w-10 h-10 rounded-full items-center justify-center ${getPaymentModeBg(item.paymentMode)}`}>
+                    <Ionicons
+                        name={getPaymentModeIcon(item.paymentMode)}
+                        size={20}
+                        color={getPaymentModeColor(item.paymentMode)}
+                    />
                 </View>
             </View>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', color: item.status === 'voided' ? '#9CA3AF' : '#1F8A70' }}>
+            <View className="flex-row justify-between items-center mb-2">
+                <Text className={`text-2xl font-bold ${item.status === 'voided' ? 'text-gray-400' : 'text-[#1F8A70]'
+                    }`}>
                     ₹{item.collectionAmount?.toLocaleString()}
                 </Text>
-                <View style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, backgroundColor: getPaymentModeColor(item.paymentMode) + '20' }}>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: getPaymentModeColor(item.paymentMode), textTransform: 'uppercase' }}>
+                <View className={`px-3 py-1 rounded-lg ${getPaymentModeBg(item.paymentMode)}`}>
+                    <Text className={`text-xs font-semibold uppercase ${getPaymentModeText(item.paymentMode)}`}>
                         {item.paymentMode}
                     </Text>
                 </View>
             </View>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View className="flex-row justify-between items-center">
+                <View className="flex-row items-center">
                     <Ionicons name="time" size={14} color="#6B7280" />
-                    <Text style={{ fontSize: 12, color: '#6B7280', marginLeft: 6 }}>
+                    <Text className="text-xs text-gray-500 ml-1.5">
                         {formatDate(item.timestamp)}
                     </Text>
                 </View>
-                <Text style={{ fontSize: 12, color: '#6B7280' }}>
+                <Text className="text-xs text-gray-500">
                     Balance: ₹{item.outstandingAfter?.toLocaleString()}
                 </Text>
             </View>
@@ -149,35 +156,38 @@ export default function CustomerTransactionsScreen() {
     );
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }} edges={['top']}>
+        <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
             {/* Header */}
-            <View style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                    <TouchableOpacity onPress={() => router.back()}>
+            <View className="bg-white px-5 py-4 border-b border-gray-200">
+                <View className="flex-row items-center mb-3">
+                    <TouchableOpacity
+                        className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-4"
+                        onPress={() => router.back()}
+                    >
                         <Ionicons name="arrow-back" size={24} color="#1F2937" />
                     </TouchableOpacity>
-                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1F2937', marginLeft: 16 }}>
+                    <Text className="text-xl font-bold text-gray-900">
                         Transaction History
                     </Text>
                 </View>
-                <Text style={{ fontSize: 14, color: '#6B7280' }}>
+                <Text className="text-sm text-gray-600">
                     {customerName}
                 </Text>
             </View>
 
             {/* Summary Card */}
-            <View style={{ padding: 20 }}>
-                <View style={{ backgroundColor: '#F0FDF4', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#86EFAC' }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View className="p-5">
+                <View className="bg-green-50 rounded-xl p-4 border border-green-300 shadow-sm">
+                    <View className="flex-row justify-between">
                         <View>
-                            <Text style={{ fontSize: 12, color: '#059669', marginBottom: 4 }}>Total Collected</Text>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#047857' }}>
+                            <Text className="text-xs text-green-700 mb-1">Total Collected</Text>
+                            <Text className="text-2xl font-bold text-green-800">
                                 ₹{totalCollected?.toLocaleString() || '0'}
                             </Text>
                         </View>
-                        <View style={{ alignItems: 'flex-end' }}>
-                            <Text style={{ fontSize: 12, color: '#059669', marginBottom: 4 }}>Transactions</Text>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#047857' }}>
+                        <View className="items-end">
+                            <Text className="text-xs text-green-700 mb-1">Transactions</Text>
+                            <Text className="text-2xl font-bold text-green-800">
                                 {transactions.length}
                             </Text>
                         </View>
@@ -187,7 +197,7 @@ export default function CustomerTransactionsScreen() {
 
             {/* Transaction List */}
             {loading ? (
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                <View className="flex-1 items-center justify-center">
                     <ActivityIndicator size="large" color="#1F8A70" />
                 </View>
             ) : (
@@ -195,18 +205,29 @@ export default function CustomerTransactionsScreen() {
                     data={transactions}
                     renderItem={renderTransaction}
                     keyExtractor={(item) => item._id}
-                    contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+                    contentContainerClassName="px-5 pb-5"
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1F8A70']} />
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={['#1F8A70']}
+                            tintColor="#1F8A70"
+                        />
                     }
                     ListEmptyComponent={
-                        <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 40 }}>
-                            <Ionicons name="receipt-outline" size={64} color="#D1D5DB" />
-                            <Text style={{ fontSize: 16, color: '#6B7280', marginTop: 16 }}>
+                        <View className="items-center justify-center py-10">
+                            <View className="w-20 h-20 rounded-full bg-gray-100 items-center justify-center mb-4">
+                                <Ionicons name="receipt-outline" size={40} color="#D1D5DB" />
+                            </View>
+                            <Text className="text-base font-semibold text-gray-900 mb-1">
                                 No transactions yet
+                            </Text>
+                            <Text className="text-sm text-gray-500">
+                                Transactions will appear here
                             </Text>
                         </View>
                     }
+                    showsVerticalScrollIndicator={false}
                 />
             )}
         </SafeAreaView>
